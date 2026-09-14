@@ -1,0 +1,175 @@
+# oiiai
+zzzz
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<title>你找到了这里</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; overflow:hidden; background:#ff0000; }
+  body { font-family: "Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif; }
+
+  #eyes { position:fixed; inset:0; z-index:1; overflow:hidden; }
+
+  .eye {
+    position:absolute;
+    width:120px;
+    height:60px;
+    background:#fff;
+    border-radius:50%;
+    box-shadow:0 0 18px rgba(0,0,0,.55);
+    animation:drift linear infinite;
+    opacity:.65;
+    pointer-events:none;
+    will-change:transform,opacity;
+  }
+
+  .eye::before {
+    content:"";
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:40%;
+    height:80%;
+    background:#000;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+  }
+
+  .eye::after {
+    content:"";
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:14%;
+    height:28%;
+    background:#6e0000;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    box-shadow:0 0 14px #ff0000;
+  }
+
+  @keyframes drift {
+    0% {
+      transform:translate(0,0) scale(1) rotate(var(--rot));
+      opacity:.22;
+    }
+    50% {
+      transform:translate(var(--会dx),var(--dy)) scale(1.18)写 rotate(calc(var(--rot) + 8deg));
+      opacity:1;
+    }
+    100% {
+      transform:translate(0,0) scale(1) rotate(var(--rot));
+      opacity:.22;
+    }
+  }
+
+  .vignette {
+    position:fixed;
+    inset:0;
+    z-index:5;
+    pointer-events:none;
+    background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,.55) 100%);
+  }
+
+  .text-wrap {
+    position:fixed;
+    inset:0;
+    z-index:10;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:6vw;
+    pointer-events:none;
+  }
+
+  .text {
+    max-width:1000px;
+    color:#fff;
+    font-weight:900;
+    font-size:clamp(26px,6vw,64px);
+    line-height:1.55;
+    text-align:center;
+    letter-spacing:.06em;
+    text-shadow:
+      0 0 8px #000,
+      0 0 24px #000,
+      0 0 48px #000,
+      0 2px 0 #000;
+    animation:pulse 2.2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { transform:scale(1); opacity:.96; }
+    50% { transform:scale(1.02); opacity:1; }
+  }
+</style>
+</head>
+<body>
+
+<div id="eyes"></div>
+<div class="vignette"></div>
+
+<div class="text-wrap">
+  <div class="text">
+    我很痛苦<br>
+    我感觉到我的灵魂似乎割裂了<br>
+    所有人都这么做吗<br>
+    我不理解<br>
+    究竟是我脑子出问题了<br>
+    还是他们都不正常呢？
+  </div>
+</div>
+
+<script>
+  const eyesLayer = document.getElementById('eyes');
+
+  function createEyes() {
+    eyesLayer.innerHTML = '';
+
+    const area = window.innerWidth * window.innerHeight;
+    const count = Math.min(120, Math.max(40, Math.floor(area / 12000)));
+
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('div');
+      el.className = 'eye';
+
+      const w = Math.random() * 130 + 40;
+      const h = w * 0.5;
+      const x = Math.random() * 110 - 5;
+      const y = Math.random() * 110 - 5;
+      const rot = (Math.random() - 0.5) * 40;
+      const dx = (Math.random() - 0.5) * 100;
+      const dy = (Math.random() - 0.5) * 100;
+      const dur = Math.random() * 9 + 7;
+      const delay = Math.random() * -16;
+
+      el.style.width = w + 'px';
+      el.style.height = h + 'px';
+      el.style.left = x + 'vw';
+      el.style.top = y + 'vh';
+      el.style.setProperty('--rot', rot + 'deg');
+      el.style.setProperty('--dx', dx + 'px');
+      el.style.setProperty('--dy', dy + 'px');
+      el.style.animationDuration = dur + 's';
+      el.style.animationDelay = delay + 's';
+      el.style.opacity = Math.random() * 0.6 + 0.2;
+
+      eyesLayer.appendChild(el);
+    }
+  }
+
+  createEyes();
+
+  let timer;
+  window.addEventListener('resize', () => {
+    clearTimeout(timer);
+    timer = setTimeout(createEyes, 300);
+  });
+</script>
+
+</body>
+</html>
