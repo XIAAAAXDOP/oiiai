@@ -14,24 +14,24 @@ zzzz
 
   #eyes { position:fixed; inset:0; z-index:1; overflow:hidden; }
 
-  /* 惊悚眼眶：使用不规则多边形裁切，制造撕裂感和内眼角 */
+  /* 惊悚眼眶：不规则多边形裁切，内眼角统一朝左，防止坐标系错乱 */
   .eye {
     position:absolute;
     background: #fff; /* 眼白为纯白色 */
-    /* 多边形裁切：模拟不规则的杏仁眼，左侧尖角为内眼角，边缘凹凸不平 */
+    /* 多边形裁切：左侧尖锐内眼角，边缘扭曲 */
     clip-path: polygon(
-      0% 50%,      /* 内眼角（尖锐） */
+      0% 50%,      /* 内眼角（左侧尖锐） */
       10% 20%,     /* 上边缘内侧 */
       30% 8%,      /* 上边缘中内 */
       55% 5%,      /* 上边缘中外 */
       85% 15%,     /* 上边缘外侧 */
-      100% 45%,    /* 外眼角 */
+      100% 45%,    /* 外眼角（右侧） */
       90% 75%,     /* 下边缘外侧 */
       65% 95%,     /* 下边缘中外 */
       35% 92%,     /* 下边缘中内 */
       15% 80%      /* 下边缘内侧 */
     );
-    /* 内部阴影制造红血丝与深邃感 */
+    /* 内部红血丝与深邃感 */
     box-shadow: inset 0 0 15px rgba(180, 0, 0, 0.9), inset 0 0 5px rgba(255, 0, 0, 0.5);
     opacity: 0;
     transform: scale(0);
@@ -39,7 +39,6 @@ zzzz
     display: flex;
     align-items: center;
     justify-content: center;
-    /* 外部投影让眼睛在红底上更立体 */
     filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.9));
     transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
@@ -54,11 +53,11 @@ zzzz
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    transition: transform 0.1s ease-out; /* 转动顺滑 */
+    transition: transform 0.1s ease-out;
     box-shadow: 0 0 8px #000;
   }
 
-  /* 红血丝细节：在眼白上叠加一层微弱的红色脉络 */
+  /* 红血丝细节 */
   .eye::after {
     content: "";
     position: absolute;
@@ -77,7 +76,6 @@ zzzz
     animation: shake 0.12s linear infinite;
   }
 
-  /* 极其微小的颤抖，增加惊悚感 */
   @keyframes shake {
     0% { transform: scale(1) translate(0, 0) rotate(0deg); }
     25% { transform: scale(1) translate(1px, -1px) rotate(1deg); }
@@ -134,7 +132,7 @@ zzzz
 
   @keyframes flashInfinite {
     0%, 100% { opacity: 0; }
-    50% { opacity: 0.6; } /* 闪烁时半透明黑，保留红色基底与黑字 */
+    50% { opacity: 0.6; }
   }
 
   .flashing .text {
@@ -166,14 +164,12 @@ zzzz
 <script>
   const eyesLayer = document.getElementById('eyes');
 
-  // 生成四周边缘的眼睛，防重叠，不遮挡文字
   function createEyes() {
     eyesLayer.innerHTML = '';
 
     const screenW = window.innerWidth;
     const screenH = window.innerHeight;
     
-    // 划分安全区：上、下、左、右，避开中间文字
     const regions = [
       { xMin: 5, xMax: 95, yMin: 5, yMax: 20 },   // 顶部
       { xMin: 5, xMax: 95, yMin: 80, yMax: 95 },  // 底部
@@ -196,7 +192,7 @@ zzzz
         x = region.xMin + Math.random() * (region.xMax - region.xMin); 
         y = region.yMin + Math.random() * (region.yMax - region.yMin); 
         
-        w = Math.random() * 90 + 50; // 宽度 50~140px
+        w = Math.random() * 90 + 50; 
         h = w * 0.45; 
 
         cx = (x / 100) * screenW;
@@ -205,7 +201,7 @@ zzzz
         let tooClose = false;
         for (let eye of placedEyes) {
           const dist = Math.hypot(cx - eye.cx, cy - eye.cy);
-          if (dist < (w + eye.w) * 0.9) { // 强制拉开距离
+          if (dist < (w + eye.w) * 0.9) { 
             tooClose = true;
             break;
           }
@@ -222,10 +218,7 @@ zzzz
       const el = document.createElement('div');
       el.className = 'eye';
       
-      // 随机左右翻转，让内眼角有的朝左，有的朝右，增加怪异感
-      if (Math.random() > 0.5) {
-        el.style.transform = 'scaleX(-1)';
-      }
+      // 注意：这里完全移除了 scaleX(-1) 翻转，保证所有眼睛的坐标系完全一致
 
       const pupil = document.createElement('div');
       pupil.className = 'pupil';
@@ -260,7 +253,6 @@ zzzz
 
     const eyes = document.querySelectorAll('.eye');
     eyes.forEach(eye => {
-      // 使用 getBoundingClientRect 获取实时的屏幕坐标（防抖动偏移）
       const rect = eye.getBoundingClientRect();
       const eyeX = rect.left + rect.width / 2;
       const eyeY = rect.top + rect.height / 2;
@@ -268,18 +260,15 @@ zzzz
       const angle = Math.atan2(clientY - eyeY, clientX - eyeX);
       
       const eyeWidth = parseFloat(eye.style.width);
-      const maxShift = eyeWidth * 0.15; // 眼珠最大偏移量
+      const maxShift = eyeWidth * 0.12; // 稍微收小偏移量，防止眼珠滑出眼眶
       
       const dx = Math.cos(angle) * maxShift;
       const dy = Math.sin(angle) * maxShift;
       
       const pupil = eye.querySelector('.pupil');
       if (pupil) {
-        // 注意：如果眼睛被镜像翻转，X轴方向需要反转
-        const isFlipped = eye.style.transform.includes('scaleX(-1)');
-        const finalDx = isFlipped ? -dx : dx;
-        
-        pupil.style.transform = `translate(calc(-50% + ${finalDx}px), calc(-50% + ${dy}px))`;
+        // 直接应用偏移，不再需要处理反向坐标
+        pupil.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
       }
     });
   }
@@ -290,7 +279,6 @@ zzzz
 
   createEyes();
 
-  // 1.5秒后：屏幕开始无限疯狂闪烁，眼睛瞬间弹出
   setTimeout(() => {
     document.body.classList.add('flashing');
 
