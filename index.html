@@ -9,20 +9,21 @@ zzzz
 <title>你找到了这里</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  html, body { width:100%; height:100%; overflow:hidden; background:#000; }
+  html, body { width:100%; height:100%; overflow:hidden; background:#ff0000; }
   body { font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif; }
 
+  /* ---------- 眼睛层 ---------- */
   #eyes { position:fixed; inset:0; z-index:1; overflow:hidden; }
 
-  /* 眼睛：改成图片（SVG data URI 由 JS 注入），不再用 ::before/::after 画 */
   .eye {
     position:absolute;
     background-repeat:no-repeat;
-    background-size:100% 100%;
-    animation:drift linear infinite;
-    opacity:.5;
+    background-position:center;
+    background-size:contain;
     pointer-events:none;
     will-change:transform,opacity;
+    filter:drop-shadow(0 0 14px rgba(0,0,0,.65));
+    animation:drift linear infinite;
   }
 
   @keyframes drift {
@@ -31,8 +32,8 @@ zzzz
       opacity:.18;
     }
     50% {
-      transform:translate(var(--dx),var(--dy)) scale(1.15) rotate(calc(var(--rot) + 8deg));
-      opacity:.95;
+      transform:translate(var(--dx),var(--dy)) scale(1.18) rotate(calc(var(--rot) + 8deg));
+      opacity:1;
     }
     100% {
       transform:translate(0,0) scale(1) rotate(var(--rot));
@@ -40,98 +41,86 @@ zzzz
     }
   }
 
-  .text-wrap {
-    position:fixed;
-    inset:0;
-    z-index:10;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:6vw;
-    pointer-events:none;
+  /* ---------- 暗角 ---------- */
+  .vignette {
+    position:fixed; inset:0; z-index:5; pointer-events:none;
+    background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,.55) 100%);
   }
 
-  /* 黑底黑字：整块不再做缩放/呼吸浮动 */
+  /* ---------- 文字层 ---------- */
+  .text-wrap {
+    position:fixed; inset:0; z-index:10;
+    display:flex; align-items:center; justify-content:center;
+    padding:6vw; pointer-events:none;
+  }
+
   .text {
     max-width:1000px;
-    font-weight:900;
-    font-size:clamp(26px,6vw,64px);
-    line-height:1.55;
+    color:#000;                 /* 黑字 */
+    font-weight:900;            /* 加粗黑 */
+    font-size:clamp(24px,5.5vw,58px);
+    line-height:1.6;
     text-align:center;
-    letter-spacing:.06em;
-    color:#000;
-    /* 纯黑背景上的黑字，用极淡的白描边让它显形 */
-    text-shadow:
-      0 0 1px #fff,
-      0 0 2px rgba(255,255,255,.85),
-      0 0 6px rgba(255,255,255,.35),
-      0 0 16px rgba(255,255,255,.15);
+    letter-spacing:.08em;
+    text-shadow:0 0 2px rgba(0,0,0,.45);
   }
-
-  .line { display:block; }
 
   /* 每个字独立颤抖 */
-  .char {
+  .ch {
     display:inline-block;
-    animation-name:shake;
-    animation-iteration-count:infinite;
-    animation-timing-function:linear;
+    transform-origin:50% 50%;
     will-change:transform;
+    animation:jitter .12s linear infinite;
   }
 
-  @keyframes shake {
-    0%   { transform:translate(0,0) rotate(0deg); }
-    15%  { transform:translate(-0.035em, 0.02em) rotate(-1.6deg); }
-    30%  { transform:translate( 0.04em,-0.015em) rotate( 1.4deg); }
-    45%  { transform:translate(-0.02em,-0.03em) rotate(-1deg); }
-    60%  { transform:translate( 0.03em, 0.025em) rotate( 1.8deg); }
-    75%  { transform:translate(-0.04em, 0.01em) rotate(-1.2deg); }
-    100% { transform:translate(0,0) rotate(0deg); }
+  @keyframes jitter {
+    0%, 100% { transform:translate(0,0) rotate(0deg); }
+    25%      { transform:translate(var(--ax), var(--ay)) rotate(var(--ar)); }
+    50%      { transform:translate(calc(var(--ax) * -1), var(--ay)) rotate(calc(var(--ar) * -1)); }
+    75%      { transform:translate(var(--ay), calc(var(--ax) * -1)) rotate(var(--ar)); }
   }
 </style>
 </head>
 <body>
 
 <div id="eyes"></div>
+<div class="vignette"></div>
 
 <div class="text-wrap">
-  <div class="text">
-    我很痛苦<br>
-    我感觉到我的灵魂似乎割裂了<br>
-    所有人都这么做吗<br>
-    我不理解<br>
-    究竟是我脑子出问题了<br>
-    还是他们都不正常呢？
-  </div>
+  <div class="text"></div>
 </div>
 
 <script>
-  /* ---------------- 眼睛图片（SVG 当作图片用） ---------------- */
+  /* ============================================================
+     ① 眼睛图片
+     想用自己的图片：把 CUSTOM_EYE_IMG 改成图片地址即可，例如：
+        const CUSTOM_EYE_IMG = "eye.png";
+        const CUSTOM_EYE_IMG = "https://xxx.com/eyes.png";
+     留空则使用下面内置的 SVG 眼睛。
+     ============================================================ */
+  const CUSTOM_EYE_IMG = "我的iPhone.eye.png"；
+
   const EYE_SVG = `
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
     <defs>
-      <radialGradient id="s" cx="50%" cy="45%" r="65%">
-        <stop offset="0%"   stop-color="#ffffff"/>
-        <stop offset="65%"  stop-color="#dedede"/>
-        <stop offset="100%" stop-color="#9a9a9a"/>
-      </radialGradient>
-      <radialGradient id="i" cx="50%" cy="50%" r="50%">
-        <stop offset="0%"   stop-color="#8e0b0b"/>
-        <stop offset="60%"  stop-color="#4a0505"/>
-        <stop offset="100%" stop-color="#180000"/>
+      <radialGradient id="pupil" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#7a0000"/>
+        <stop offset="100%" stop-color="#000000"/>
       </radialGradient>
     </defs>
-    <ellipse cx="100" cy="50" rx="96" ry="47" fill="url(#s)" stroke="#0a0a0a" stroke-width="5"/>
-    <ellipse cx="100" cy="50" rx="66" ry="34" fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="2"/>
-    <circle cx="100" cy="50" r="31" fill="url(#i)"/>
-    <circle cx="100" cy="50" r="13" fill="#050505"/>
-    <circle cx="88"  cy="39" r="6.5" fill="#ffffff" opacity="0.92"/>
-    <circle cx="112" cy="61" r="3"   fill="#ffffff" opacity="0.45"/>
+    <ellipse cx="100" cy="50" rx="94" ry="46" fill="#f4f4f4"/>
+    <ellipse cx="100" cy="50" rx="94" ry="46" fill="none" stroke="#101010" stroke-width="6"/>
+    <circle cx="100" cy="50" r="36" fill="#000"/>
+    <circle cx="100" cy="50" r="28" fill="url(#pupil)"/>
+    <circle cx="86" cy="36" r="9" fill="#ffffff" opacity="0.92"/>
   </svg>`;
 
-  const EYE_URL = https://chat.deepseek.com/share/ic1jx41nxmg1drk420
+  const EYE_IMG = CUSTOM_EYE_IMG ||
+    ("data:image/svg+xml;charset=utf-8," + encodeURIComponent(EYE_SVG));
 
-  /* ---------------- 生成眼睛 ---------------- */
+  /* ============================================================
+     ② 生成眼睛
+     ============================================================ */
   const eyesLayer = document.getElementById('eyes');
 
   function createEyes() {
@@ -144,13 +133,13 @@ zzzz
       const el = document.createElement('div');
       el.className = 'eye';
 
-      const w = Math.random() * 130 + 40;
-      const h = w * 0.5;                          // 保持图片 2:1 比例，不变形
+      const w = Math.random() * 140 + 55;   // 眼睛宽度
+      const h = w * 0.5;                    // 图片宽高比 2:1
       const x = Math.random() * 110 - 5;
       const y = Math.random() * 110 - 5;
       const rot = (Math.random() - 0.5) * 40;
-      const dx = (Math.random() - 0.5) * 100;
-      const dy = (Math.random() - 0.5) * 100;
+      const dx = (Math.random() - 0.5) * 120;
+      const dy = (Math.random() - 0.5) * 120;
       const dur = Math.random() * 9 + 7;
       const delay = Math.random() * -16;
 
@@ -158,7 +147,7 @@ zzzz
       el.style.height = h + 'px';
       el.style.left = x + 'vw';
       el.style.top = y + 'vh';
-      el.style.backgroundImage = EYE_URL;         // ★ 图片眼睛
+      el.style.backgroundImage = 'url("' + EYE_IMG + '")';
       el.style.setProperty('--rot', rot + 'deg');
       el.style.setProperty('--dx', dx + 'px');
       el.style.setProperty('--dy', dy + 'px');
@@ -171,38 +160,46 @@ zzzz
 
   createEyes();
 
-  let timer;
+  let resizeTimer;
   window.addEventListener('resize', () => {
-    clearTimeout(timer);
-    timer = setTimeout(createEyes, 300);
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(createEyes, 300);
   });
 
-  /* ---------------- 把每个字拆成独立 span，各自颤抖 ---------------- */
+  /* ============================================================
+     ③ 文字逐字拆分 + 随机颤抖参数
+     ============================================================ */
+  const LINES = [
+    "我很痛苦",
+    "我感觉到我的灵魂似乎割裂了",
+    "所有人都这么做吗",
+    "我不理解",
+    "究竟是我脑子出问题了",
+    "还是他们都不正常呢？"
+  ];
+
   const textEl = document.querySelector('.text');
 
-  function splitChars() {
-    const lines = textEl.innerHTML.split(/<br\s*\/?>/i);
-    textEl.innerHTML = '';
+  textEl.innerHTML = LINES.map(line =>
+    Array.from(line)
+      .map(ch => '<span class="ch">' + ch + '</span>')
+      .join('')
+  ).join('<br>');
 
-    lines.forEach(line => {
-      const lineDiv = document.createElement('div');
-      lineDiv.className = 'line';
+  document.querySelectorAll('.ch').forEach(el => {
+    // 颤抖幅度（越大越剧烈）
+    const ax = (Math.random() * 2 - 1) * 20;   // 水平位移 ±20px
+    const ay = (Math.random() * 2 - 1) * 18;   // 垂直位移 ±18px
+    const ar = (Math.random() * 2 - 1) * 16;   // 旋转 ±16deg
 
-      Array.from(line.trim()).forEach(ch => {
-        const s = document.createElement('span');
-        s.className = 'char';
-        s.textContent = ch;
-        // 每个字随机速度 + 随机负延迟 → 各自颤，不同步
-        s.style.animationDuration = (0.14 + Math.random() * 0.3).toFixed(3) + 's';
-        s.style.animationDelay = (-Math.random() * 0.6).toFixed(3) + 's';
-        lineDiv.appendChild(s);
-      });
+    el.style.setProperty('--ax', ax.toFixed(1) + 'px');
+    el.style.setProperty('--ay', ay.toFixed(1) + 'px');
+    el.style.setProperty('--ar', ar.toFixed(1) + 'deg');
 
-      textEl.appendChild(lineDiv);
-    });
-  }
-
-  splitChars();
+    // 每个字速度/相位都不同，错落感更强
+    el.style.animationDuration = (0.08 + Math.random() * 0.09).toFixed(3) + 's';
+    el.style.animationDelay = (-Math.random() * 0.3).toFixed(3) + 's';
+  });
 </script>
 
 </body>
