@@ -7,6 +7,9 @@ zzzz
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="robots" content="noindex, nofollow">
 <title>你找到了这里</title>
+<!-- 引入 TensorFlow.js 和 BlazeFace 轻量级人脸检测 -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body { width:100%; height:100%; overflow:hidden; background:#ff0000; }
@@ -14,24 +17,14 @@ zzzz
 
   #eyes { position:fixed; inset:0; z-index:1; overflow:hidden; }
 
-  /* 惊悚眼眶：不规则多边形裁切，内眼角统一朝左，防止坐标系错乱 */
+  /* 惊悚眼眶：不规则多边形裁切，左侧尖锐内眼角 */
   .eye {
     position:absolute;
     background: #fff; /* 眼白为纯白色 */
-    /* 多边形裁切：左侧尖锐内眼角，边缘扭曲 */
     clip-path: polygon(
-      0% 50%,      /* 内眼角（左侧尖锐） */
-      10% 20%,     /* 上边缘内侧 */
-      30% 8%,      /* 上边缘中内 */
-      55% 5%,      /* 上边缘中外 */
-      85% 15%,     /* 上边缘外侧 */
-      100% 45%,    /* 外眼角（右侧） */
-      90% 75%,     /* 下边缘外侧 */
-      65% 95%,     /* 下边缘中外 */
-      35% 92%,     /* 下边缘中内 */
-      15% 80%      /* 下边缘内侧 */
+      0% 50%, 10% 20%, 30% 8%, 55% 5%, 85% 15%, 100% 45%,
+      90% 75%, 65% 95%, 35% 92%, 15% 80%
     );
-    /* 内部红血丝与深邃感 */
     box-shadow: inset 0 0 15px rgba(180, 0, 0, 0.9), inset 0 0 5px rgba(255, 0, 0, 0.5);
     opacity: 0;
     transform: scale(0);
@@ -43,12 +36,12 @@ zzzz
     transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
 
-  /* 眼珠：纯黑色，无高光 */
+  /* 眼珠：纯黑无高光 */
   .pupil {
     position: absolute;
     width: 35%;
     height: 65%;
-    background: #000; /* 纯黑 */
+    background: #000;
     border-radius: 50%;
     left: 50%;
     top: 50%;
@@ -57,7 +50,7 @@ zzzz
     box-shadow: 0 0 8px #000;
   }
 
-  /* 红血丝细节 */
+  /* 红血丝 */
   .eye::after {
     content: "";
     position: absolute;
@@ -69,7 +62,7 @@ zzzz
     pointer-events: none;
   }
 
-  /* 眼睛出现后：弹性缩放 + 持续高频颤抖 */
+  /* 出现后微颤抖 */
   .eye.spawned {
     opacity: 1;
     transform: scale(1);
@@ -85,63 +78,32 @@ zzzz
   }
 
   .vignette {
-    position:fixed;
-    inset:0;
-    z-index:5;
-    pointer-events:none;
+    position:fixed; inset:0; z-index:5; pointer-events:none;
     background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,.6) 100%);
   }
 
-  /* 文字：黑色加粗黑体 */
+  /* 文字样式：黑字加粗黑体 */
   .text-wrap {
-    position:fixed;
-    inset:0;
-    z-index:10;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:6vw;
-    pointer-events:none;
+    position:fixed; inset:0; z-index:10;
+    display:flex; align-items:center; justify-content:center;
+    padding:6vw; pointer-events:none;
   }
-
   .text {
-    max-width:1000px;
-    color:#000;
-    font-weight:900;
+    max-width:1000px; color:#000; font-weight:900;
     font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Heiti SC", sans-serif;
-    font-size:clamp(26px, 6vw, 64px);
-    line-height:1.55;
-    text-align:center;
-    letter-spacing:.06em;
-    text-shadow: none;
+    font-size:clamp(26px, 6vw, 64px); line-height:1.55; text-align:center;
+    letter-spacing:.06em; text-shadow: none;
   }
 
   /* 闪烁遮罩层：无限疯狂闪 */
   #flash-overlay {
-    position: fixed;
-    inset: 0;
-    background: #000;
-    opacity: 0;
-    pointer-events: none;
-    z-index: 100;
+    position: fixed; inset: 0; background: #000; opacity: 0;
+    pointer-events: none; z-index: 100;
   }
-
-  .flashing #flash-overlay {
-    animation: flashInfinite 0.12s infinite;
-  }
-
-  @keyframes flashInfinite {
-    0%, 100% { opacity: 0; }
-    50% { opacity: 0.6; }
-  }
-
-  .flashing .text {
-    animation: textFlash 0.12s infinite;
-  }
-  @keyframes textFlash {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
+  .flashing #flash-overlay { animation: flashInfinite 0.12s infinite; }
+  @keyframes flashInfinite { 0%, 100% { opacity: 0; } 50% { opacity: 0.6; } }
+  .flashing .text { animation: textFlash 0.12s infinite; }
+  @keyframes textFlash { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 </style>
 </head>
 <body>
@@ -163,18 +125,22 @@ zzzz
 
 <script>
   const eyesLayer = document.getElementById('eyes');
+  let faceModel = null;
+  let isModelLoaded = false;
+  let currentTargetX = window.innerWidth / 2; // 默认目标点（屏幕中心）
+  let currentTargetY = window.innerHeight / 2;
 
+  // 1. 初始化布局（四周分布，不遮挡文字，防重叠）
   function createEyes() {
     eyesLayer.innerHTML = '';
-
     const screenW = window.innerWidth;
     const screenH = window.innerHeight;
     
     const regions = [
-      { xMin: 5, xMax: 95, yMin: 5, yMax: 20 },   // 顶部
-      { xMin: 5, xMax: 95, yMin: 80, yMax: 95 },  // 底部
-      { xMin: 5, xMax: 15, yMin: 20, yMax: 80 },  // 左侧
-      { xMin: 85, xMax: 95, yMin: 20, yMax: 80 }  // 右侧
+      { xMin: 5, xMax: 95, yMin: 5, yMax: 20 },
+      { xMin: 5, xMax: 95, yMin: 80, yMax: 95 },
+      { xMin: 5, xMax: 15, yMin: 20, yMax: 80 },
+      { xMin: 85, xMax: 95, yMin: 20, yMax: 80 }
     ];
 
     const placedEyes = []; 
@@ -182,44 +148,32 @@ zzzz
 
     for (let i = 0; i < eyeCount; i++) {
       const region = regions[i % regions.length];
-      
       let x, y, w, h, cx, cy;
       let validPlacement = false;
       let attempts = 0;
 
-      // 防重叠检测
       while (!validPlacement && attempts < 50) {
         x = region.xMin + Math.random() * (region.xMax - region.xMin); 
         y = region.yMin + Math.random() * (region.yMax - region.yMin); 
-        
         w = Math.random() * 90 + 50; 
         h = w * 0.45; 
-
         cx = (x / 100) * screenW;
         cy = (y / 100) * screenH;
 
         let tooClose = false;
         for (let eye of placedEyes) {
           const dist = Math.hypot(cx - eye.cx, cy - eye.cy);
-          if (dist < (w + eye.w) * 0.9) { 
-            tooClose = true;
-            break;
-          }
+          if (dist < (w + eye.w) * 0.9) { tooClose = true; break; }
         }
-
         if (!tooClose) validPlacement = true;
         attempts++;
       }
 
       if (!validPlacement) continue;
-
       placedEyes.push({ cx, cy, w });
 
       const el = document.createElement('div');
       el.className = 'eye';
-      
-      // 注意：这里完全移除了 scaleX(-1) 翻转，保证所有眼睛的坐标系完全一致
-
       const pupil = document.createElement('div');
       pupil.className = 'pupil';
       el.appendChild(pupil);
@@ -228,70 +182,130 @@ zzzz
       el.style.height = h + 'px';
       el.style.left = x + 'vw';
       el.style.top = y + 'vh';
-      
-      el.dataset.cx = cx;
-      el.dataset.cy = cy;
-
       eyesLayer.appendChild(el);
     }
   }
 
-  // 手指/鼠标交互：眼球看向触点
-  function handleMove(e) {
-    let clientX, clientY;
-    
-    if (e.touches && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else if (e.changedTouches && e.changedTouches.length > 0) {
-      clientX = e.changedTouches[0].clientX;
-      clientY = e.changedTouches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-
+  // 2. 更新所有眼珠的朝向
+  function updatePupils(targetX, targetY) {
     const eyes = document.querySelectorAll('.eye');
     eyes.forEach(eye => {
       const rect = eye.getBoundingClientRect();
       const eyeX = rect.left + rect.width / 2;
       const eyeY = rect.top + rect.height / 2;
       
-      const angle = Math.atan2(clientY - eyeY, clientX - eyeX);
-      
+      const angle = Math.atan2(targetY - eyeY, targetX - eyeX);
       const eyeWidth = parseFloat(eye.style.width);
-      const maxShift = eyeWidth * 0.12; // 稍微收小偏移量，防止眼珠滑出眼眶
+      const maxShift = eyeWidth * 0.12; 
       
       const dx = Math.cos(angle) * maxShift;
       const dy = Math.sin(angle) * maxShift;
       
       const pupil = eye.querySelector('.pupil');
       if (pupil) {
-        // 直接应用偏移，不再需要处理反向坐标
         pupil.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
       }
     });
   }
 
-  document.addEventListener('mousemove', handleMove);
-  document.addEventListener('touchmove', handleMove, { passive: false });
-  document.addEventListener('touchstart', handleMove, { passive: false });
+  // 3. 启动摄像头和人脸检测
+  async function initCamera() {
+    const video = document.createElement('video');
+    video.autoplay = true;
+    video.playsInline = true;
+    video.muted = true;
+    // 隐藏视频元素，只用作计算
+    video.style.position = 'absolute';
+    video.style.opacity = '0';
+    video.style.pointerEvents = 'none';
+    document.body.appendChild(video);
 
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user', width: 320, height: 240 } 
+      });
+      video.srcObject = stream;
+      
+      // 加载 BlazeFace 模型
+      faceModel = await blazeface.load();
+      isModelLoaded = true;
+      
+      // 开始循环检测
+      detectFace(video);
+    } catch (err) {
+      console.warn("无法获取摄像头权限，将退回鼠标/触摸控制:", err);
+      // 如果摄像头不可用，退回到鼠标/触摸控制
+      document.addEventListener('mousemove', (e) => {
+        currentTargetX = e.clientX;
+        currentTargetY = e.clientY;
+      });
+      document.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) {
+          currentTargetX = e.touches[0].clientX;
+          currentTargetY = e.touches[0].clientY;
+        }
+      }, { passive: false });
+      
+      // 启动一个定时器，用鼠标位置更新眼珠
+      setInterval(() => updatePupils(currentTargetX, currentTargetY), 50);
+    }
+  }
+
+  // 4. 人脸检测循环
+  async function detectFace(video) {
+    if (!isModelLoaded || !faceModel) return;
+
+    // 每 3 帧检测一次，减轻性能压力
+    const predictions = await faceModel.estimateFaces(video, false);
+    
+    if (predictions.length > 0) {
+      // 获取第一张人脸的边界框
+      const start = predictions[0].topLeft;
+      const end = predictions[0].bottomRight;
+      
+      // 计算人脸中心在视频画面中的比例坐标
+      const faceCenterX = (start[0] + end[0]) / 2;
+      const faceCenterY = (start[1] + end[1]) / 2;
+      
+      const videoW = video.videoWidth || 320;
+      const videoH = video.videoHeight || 240;
+      
+      // 将视频坐标映射到屏幕坐标
+      // 镜像处理：因为自拍时人是反的，为了符合直觉，我们把 X 轴反转一下
+      const screenX = (1 - faceCenterX / videoW) * window.innerWidth;
+      const screenY = (faceCenterY / videoH) * window.innerHeight;
+      
+      currentTargetX = screenX;
+      currentTargetY = screenY;
+    }
+
+    // 更新眼珠位置
+    updatePupils(currentTargetX, currentTargetY);
+
+    // 下一帧继续检测
+    requestAnimationFrame(() => detectFace(video));
+  }
+
+  // 初始化
   createEyes();
+  
+  // 启动摄像头（如果失败会退回鼠标控制）
+  initCamera();
 
-  setTimeout(() => {
-    document.body.classList.add('flashing');
-
-    document.querySelectorAll('.eye').forEach(eye => {
-      eye.classList.add('spawned');
-    });
-  }, 1500);
-
+  // 窗口调整大小时重新生成布局
   let timer;
   window.addEventListener('resize', () => {
     clearTimeout(timer);
     timer = setTimeout(createEyes, 300);
   });
+
+  // 1.5秒后：屏幕开始无限疯狂闪烁，眼睛瞬间弹出
+  setTimeout(() => {
+    document.body.classList.add('flashing');
+    document.querySelectorAll('.eye').forEach(eye => {
+      eye.classList.add('spawned');
+    });
+  }, 1500);
 </script>
 
 </body>
