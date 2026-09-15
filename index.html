@@ -9,70 +9,35 @@ zzzz
 <title>你找到了这里</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  html, body { width:100%; height:100%; overflow:hidden; background:#ff0000; }
-  body { font-family: "Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif; }
+  html, body { width:100%; height:100%; overflow:hidden; background:#000; }
+  body { font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif; }
 
   #eyes { position:fixed; inset:0; z-index:1; overflow:hidden; }
 
+  /* 眼睛：改成图片（SVG data URI 由 JS 注入），不再用 ::before/::after 画 */
   .eye {
     position:absolute;
-    width:120px;
-    height:60px;
-    background:#fff;
-    border-radius:50%;
-    box-shadow:0 0 18px rgba(0,0,0,.55);
+    background-repeat:no-repeat;
+    background-size:100% 100%;
     animation:drift linear infinite;
-    opacity:.65;
+    opacity:.5;
     pointer-events:none;
     will-change:transform,opacity;
-  }
-
-  .eye::before {
-    content:"";
-    position:absolute;
-    left:50%;
-    top:50%;
-    width:40%;
-    height:80%;
-    background:#000;
-    border-radius:50%;
-    transform:translate(-50%,-50%);
-  }
-
-  .eye::after {
-    content:"";
-    position:absolute;
-    left:50%;
-    top:50%;
-    width:14%;
-    height:28%;
-    background:#6e0000;
-    border-radius:50%;
-    transform:translate(-50%,-50%);
-    box-shadow:0 0 14px #ff0000;
   }
 
   @keyframes drift {
     0% {
       transform:translate(0,0) scale(1) rotate(var(--rot));
-      opacity:.22;
+      opacity:.18;
     }
     50% {
-      transform:translate(var(--会dx),var(--dy)) scale(1.18)写 rotate(calc(var(--rot) + 8deg));
-      opacity:1;
+      transform:translate(var(--dx),var(--dy)) scale(1.15) rotate(calc(var(--rot) + 8deg));
+      opacity:.95;
     }
     100% {
       transform:translate(0,0) scale(1) rotate(var(--rot));
-      opacity:.22;
+      opacity:.18;
     }
-  }
-
-  .vignette {
-    position:fixed;
-    inset:0;
-    z-index:5;
-    pointer-events:none;
-    background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,.55) 100%);
   }
 
   .text-wrap {
@@ -86,32 +51,48 @@ zzzz
     pointer-events:none;
   }
 
+  /* 黑底黑字：整块不再做缩放/呼吸浮动 */
   .text {
     max-width:1000px;
-    color:#fff;
     font-weight:900;
     font-size:clamp(26px,6vw,64px);
     line-height:1.55;
     text-align:center;
     letter-spacing:.06em;
+    color:#000;
+    /* 纯黑背景上的黑字，用极淡的白描边让它显形 */
     text-shadow:
-      0 0 8px #000,
-      0 0 24px #000,
-      0 0 48px #000,
-      0 2px 0 #000;
-    animation:pulse 2.2s ease-in-out infinite;
+      0 0 1px #fff,
+      0 0 2px rgba(255,255,255,.85),
+      0 0 6px rgba(255,255,255,.35),
+      0 0 16px rgba(255,255,255,.15);
   }
 
-  @keyframes pulse {
-    0%,100% { transform:scale(1); opacity:.96; }
-    50% { transform:scale(1.02); opacity:1; }
+  .line { display:block; }
+
+  /* 每个字独立颤抖 */
+  .char {
+    display:inline-block;
+    animation-name:shake;
+    animation-iteration-count:infinite;
+    animation-timing-function:linear;
+    will-change:transform;
+  }
+
+  @keyframes shake {
+    0%   { transform:translate(0,0) rotate(0deg); }
+    15%  { transform:translate(-0.035em, 0.02em) rotate(-1.6deg); }
+    30%  { transform:translate( 0.04em,-0.015em) rotate( 1.4deg); }
+    45%  { transform:translate(-0.02em,-0.03em) rotate(-1deg); }
+    60%  { transform:translate( 0.03em, 0.025em) rotate( 1.8deg); }
+    75%  { transform:translate(-0.04em, 0.01em) rotate(-1.2deg); }
+    100% { transform:translate(0,0) rotate(0deg); }
   }
 </style>
 </head>
 <body>
 
 <div id="eyes"></div>
-<div class="vignette"></div>
 
 <div class="text-wrap">
   <div class="text">
@@ -125,6 +106,32 @@ zzzz
 </div>
 
 <script>
+  /* ---------------- 眼睛图片（SVG 当作图片用） ---------------- */
+  const EYE_SVG = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
+    <defs>
+      <radialGradient id="s" cx="50%" cy="45%" r="65%">
+        <stop offset="0%"   stop-color="#ffffff"/>
+        <stop offset="65%"  stop-color="#dedede"/>
+        <stop offset="100%" stop-color="#9a9a9a"/>
+      </radialGradient>
+      <radialGradient id="i" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stop-color="#8e0b0b"/>
+        <stop offset="60%"  stop-color="#4a0505"/>
+        <stop offset="100%" stop-color="#180000"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="100" cy="50" rx="96" ry="47" fill="url(#s)" stroke="#0a0a0a" stroke-width="5"/>
+    <ellipse cx="100" cy="50" rx="66" ry="34" fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="2"/>
+    <circle cx="100" cy="50" r="31" fill="url(#i)"/>
+    <circle cx="100" cy="50" r="13" fill="#050505"/>
+    <circle cx="88"  cy="39" r="6.5" fill="#ffffff" opacity="0.92"/>
+    <circle cx="112" cy="61" r="3"   fill="#ffffff" opacity="0.45"/>
+  </svg>`;
+
+  const EYE_URL = https://chat.deepseek.com/share/ic1jx41nxmg1drk420
+
+  /* ---------------- 生成眼睛 ---------------- */
   const eyesLayer = document.getElementById('eyes');
 
   function createEyes() {
@@ -138,7 +145,7 @@ zzzz
       el.className = 'eye';
 
       const w = Math.random() * 130 + 40;
-      const h = w * 0.5;
+      const h = w * 0.5;                          // 保持图片 2:1 比例，不变形
       const x = Math.random() * 110 - 5;
       const y = Math.random() * 110 - 5;
       const rot = (Math.random() - 0.5) * 40;
@@ -151,12 +158,12 @@ zzzz
       el.style.height = h + 'px';
       el.style.left = x + 'vw';
       el.style.top = y + 'vh';
+      el.style.backgroundImage = EYE_URL;         // ★ 图片眼睛
       el.style.setProperty('--rot', rot + 'deg');
       el.style.setProperty('--dx', dx + 'px');
       el.style.setProperty('--dy', dy + 'px');
       el.style.animationDuration = dur + 's';
       el.style.animationDelay = delay + 's';
-      el.style.opacity = Math.random() * 0.6 + 0.2;
 
       eyesLayer.appendChild(el);
     }
@@ -169,6 +176,33 @@ zzzz
     clearTimeout(timer);
     timer = setTimeout(createEyes, 300);
   });
+
+  /* ---------------- 把每个字拆成独立 span，各自颤抖 ---------------- */
+  const textEl = document.querySelector('.text');
+
+  function splitChars() {
+    const lines = textEl.innerHTML.split(/<br\s*\/?>/i);
+    textEl.innerHTML = '';
+
+    lines.forEach(line => {
+      const lineDiv = document.createElement('div');
+      lineDiv.className = 'line';
+
+      Array.from(line.trim()).forEach(ch => {
+        const s = document.createElement('span');
+        s.className = 'char';
+        s.textContent = ch;
+        // 每个字随机速度 + 随机负延迟 → 各自颤，不同步
+        s.style.animationDuration = (0.14 + Math.random() * 0.3).toFixed(3) + 's';
+        s.style.animationDelay = (-Math.random() * 0.6).toFixed(3) + 's';
+        lineDiv.appendChild(s);
+      });
+
+      textEl.appendChild(lineDiv);
+    });
+  }
+
+  splitChars();
 </script>
 
 </body>
