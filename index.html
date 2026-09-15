@@ -10,118 +10,119 @@ zzzz
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body { width:100%; height:100%; overflow:hidden; background:#ff0000; }
-  body { font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Heiti SC", sans-serif; }
 
-  /* ---------- 眼睛层 ---------- */
   #eyes { position:fixed; inset:0; z-index:1; overflow:hidden; }
 
+  /* 纯 CSS 绘制内置眼睛，无高光，类似原图的尖锐轮廓 */
   .eye {
     position:absolute;
-    background-repeat:no-repeat;
-    background-position:center;
-    background-size:contain;
-    pointer-events:none;
-    will-change:transform,opacity;
-    filter:drop-shadow(0 0 14px rgba(0,0,0,.65));
-    animation:drift linear infinite;
+    width:130px;
+    height:55px;
+    background:#000;
+    /* 使用多边形裁剪模拟眼睛的尖锐形状 */
+    clip-path: polygon(0% 50%, 15% 15%, 50% 5%, 85% 15%, 100% 50%, 85% 85%, 50% 95%, 15% 85%);
+    box-shadow: inset 0 0 15px rgba(0,0,0,1);
+    filter: drop-shadow(0 0 10px rgba(0,0,0,0.9)); /* 让黑眼睛在红底上更立体 */
+    opacity: 0;
+    transform: scale(0);
+    pointer-events: none;
+    will-change: transform, opacity;
+  }
+
+  /* 眼睛出现时的弹性动画，之后进入漂浮状态 */
+  .eye.spawned {
+    opacity: 1;
+    transform: scale(1);
+    animation: drift var(--dur) linear infinite alternate;
+    animation-delay: 0.3s;
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
 
   @keyframes drift {
     0% {
-      transform:translate(0,0) scale(1) rotate(var(--rot));
-      opacity:.18;
-    }
-    50% {
-      transform:translate(var(--dx),var(--dy)) scale(1.18) rotate(calc(var(--rot) + 8deg));
-      opacity:1;
+      transform: translate(0,0) scale(1) rotate(var(--rot));
+      opacity: .6;
     }
     100% {
-      transform:translate(0,0) scale(1) rotate(var(--rot));
-      opacity:.18;
+      transform: translate(var(--dx),var(--dy)) scale(1.15) rotate(calc(var(--rot) + 8deg));
+      opacity: 1;
     }
   }
 
-  /* ---------- 暗角 ---------- */
+  /* 暗角效果 */
   .vignette {
-    position:fixed; inset:0; z-index:5; pointer-events:none;
-    background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,.55) 100%);
+    position:fixed;
+    inset:0;
+    z-index:5;
+    pointer-events:none;
+    background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,.6) 100%);
   }
 
-  /* ---------- 文字层 ---------- */
+  /* 文字样式：黑字加粗黑体 */
   .text-wrap {
-    position:fixed; inset:0; z-index:10;
-    display:flex; align-items:center; justify-content:center;
-    padding:6vw; pointer-events:none;
+    position:fixed;
+    inset:0;
+    z-index:10;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:6vw;
+    pointer-events:none;
+    transition: opacity 0.05s; /* 用于闪烁 */
   }
 
   .text {
     max-width:1000px;
-    color:#000;                 /* 黑字 */
-    font-weight:900;            /* 加粗黑 */
-    font-size:clamp(24px,5.5vw,58px);
-    line-height:1.6;
+    color:#000; /* 黑字 */
+    font-weight:900; /* 加粗 */
+    font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Heiti SC", sans-serif; /* 黑体 */
+    font-size:clamp(26px, 6vw, 64px);
+    line-height:1.55;
     text-align:center;
-    letter-spacing:.08em;
-    text-shadow:0 0 2px rgba(0,0,0,.45);
+    letter-spacing:.06em;
+    text-shadow: none; /* 去除原有白色阴影 */
+    animation:pulse 2.2s ease-in-out infinite;
   }
 
-  /* 每个字独立颤抖 */
-  .ch {
-    display:inline-block;
-    transform-origin:50% 50%;
-    will-change:transform;
-    animation:jitter .12s linear infinite;
+  @keyframes pulse {
+    0%,100% { transform:scale(1); opacity:.96; }
+    50% { transform:scale(1.02); opacity:1; }
   }
 
-  @keyframes jitter {
-    0%, 100% { transform:translate(0,0) rotate(0deg); }
-    25%      { transform:translate(var(--ax), var(--ay)) rotate(var(--ar)); }
-    50%      { transform:translate(calc(var(--ax) * -1), var(--ay)) rotate(calc(var(--ar) * -1)); }
-    75%      { transform:translate(var(--ay), calc(var(--ax) * -1)) rotate(var(--ar)); }
+  /* 闪烁遮罩层 */
+  #flash-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+    transition: opacity 0.05s;
   }
 </style>
 </head>
 <body>
 
+<div id="flash-overlay"></div>
 <div id="eyes"></div>
 <div class="vignette"></div>
 
 <div class="text-wrap">
-  <div class="text"></div>
+  <div class="text">
+    我很痛苦<br>
+    我感觉到我的灵魂似乎割裂了<br>
+    所有人都这么做吗<br>
+    我不理解<br>
+    究竟是我脑子出问题了<br>
+    还是他们都不正常呢？
+  </div>
 </div>
 
 <script>
-  /* ============================================================
-     ① 眼睛图片
-     想用自己的图片：把 CUSTOM_EYE_IMG 改成图片地址即可，例如：
-        const CUSTOM_EYE_IMG = "eye.png";
-        const CUSTOM_EYE_IMG = "https://xxx.com/eyes.png";
-     留空则使用下面内置的 SVG 眼睛。
-     ============================================================ */
-  const CUSTOM_EYE_IMG = "";
-
-  const EYE_SVG = `
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
-    <defs>
-      <radialGradient id="pupil" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#7a0000"/>
-        <stop offset="100%" stop-color="#000000"/>
-      </radialGradient>
-    </defs>
-    <ellipse cx="100" cy="50" rx="94" ry="46" fill="#f4f4f4"/>
-    <ellipse cx="100" cy="50" rx="94" ry="46" fill="none" stroke="#101010" stroke-width="6"/>
-    <circle cx="100" cy="50" r="36" fill="#000"/>
-    <circle cx="100" cy="50" r="28" fill="url(#pupil)"/>
-    <circle cx="86" cy="36" r="9" fill="#ffffff" opacity="0.92"/>
-  </svg>`;
-
-  const EYE_IMG = CUSTOM_EYE_IMG ||
-    ("data:image/svg+xml;charset=utf-8," + encodeURIComponent(EYE_SVG));
-
-  /* ============================================================
-     ② 生成眼睛
-     ============================================================ */
   const eyesLayer = document.getElementById('eyes');
+  const flashOverlay = document.getElementById('flash-overlay');
+  const textWrap = document.querySelector('.text-wrap');
 
   function createEyes() {
     eyesLayer.innerHTML = '';
@@ -133,26 +134,23 @@ zzzz
       const el = document.createElement('div');
       el.className = 'eye';
 
-      const w = Math.random() * 140 + 55;   // 眼睛宽度
-      const h = w * 0.5;                    // 图片宽高比 2:1
+      const w = Math.random() * 130 + 40;
+      const h = w * 0.45;
       const x = Math.random() * 110 - 5;
       const y = Math.random() * 110 - 5;
       const rot = (Math.random() - 0.5) * 40;
-      const dx = (Math.random() - 0.5) * 120;
-      const dy = (Math.random() - 0.5) * 120;
+      const dx = (Math.random() - 0.5) * 100;
+      const dy = (Math.random() - 0.5) * 100;
       const dur = Math.random() * 9 + 7;
-      const delay = Math.random() * -16;
 
       el.style.width = w + 'px';
       el.style.height = h + 'px';
       el.style.left = x + 'vw';
       el.style.top = y + 'vh';
-      el.style.backgroundImage = 'url("' + EYE_IMG + '")';
       el.style.setProperty('--rot', rot + 'deg');
       el.style.setProperty('--dx', dx + 'px');
       el.style.setProperty('--dy', dy + 'px');
-      el.style.animationDuration = dur + 's';
-      el.style.animationDelay = delay + 's';
+      el.style.setProperty('--dur', dur + 's');
 
       eyesLayer.appendChild(el);
     }
@@ -160,45 +158,40 @@ zzzz
 
   createEyes();
 
-  let resizeTimer;
+  // 1.5秒后触发疯狂闪烁，随后眼睛突然出现
+  setTimeout(() => {
+    let flickerCount = 0;
+    
+    // 每60毫秒切换一次闪烁遮罩层和文字透明度
+    const flickerInterval = setInterval(() => {
+      // 切换黑色遮罩层，实现屏幕疯狂闪烁
+      flashOverlay.style.opacity = flashOverlay.style.opacity === '1' ? '0' : '1';
+      
+      // 让文字也随着闪烁忽明忽暗
+      textWrap.style.opacity = textWrap.style.opacity === '0.2' ? '1' : '0.2';
+
+      flickerCount++;
+
+      // 大约1秒的疯狂闪烁后停止
+      if (flickerCount > 15) {
+        clearInterval(flickerInterval);
+        
+        // 恢复屏幕和文字
+        flashOverlay.style.opacity = '0';
+        textWrap.style.opacity = '1';
+
+        // 让所有眼睛以弹性动画瞬间出现
+        document.querySelectorAll('.eye').forEach(eye => {
+          eye.classList.add('spawned');
+        });
+      }
+    }, 60);
+  }, 1500);
+
+  let timer;
   window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(createEyes, 300);
-  });
-
-  /* ============================================================
-     ③ 文字逐字拆分 + 随机颤抖参数
-     ============================================================ */
-  const LINES = [
-    "我很痛苦",
-    "我感觉到我的灵魂似乎割裂了",
-    "所有人都这么做吗",
-    "我不理解",
-    "究竟是我脑子出问题了",
-    "还是他们都不正常呢？"
-  ];
-
-  const textEl = document.querySelector('.text');
-
-  textEl.innerHTML = LINES.map(line =>
-    Array.from(line)
-      .map(ch => '<span class="ch">' + ch + '</span>')
-      .join('')
-  ).join('<br>');
-
-  document.querySelectorAll('.ch').forEach(el => {
-    // 颤抖幅度（越大越剧烈）
-    const ax = (Math.random() * 2 - 1) * 20;   // 水平位移 ±20px
-    const ay = (Math.random() * 2 - 1) * 18;   // 垂直位移 ±18px
-    const ar = (Math.random() * 2 - 1) * 16;   // 旋转 ±16deg
-
-    el.style.setProperty('--ax', ax.toFixed(1) + 'px');
-    el.style.setProperty('--ay', ay.toFixed(1) + 'px');
-    el.style.setProperty('--ar', ar.toFixed(1) + 'deg');
-
-    // 每个字速度/相位都不同，错落感更强
-    el.style.animationDuration = (0.08 + Math.random() * 0.09).toFixed(3) + 's';
-    el.style.animationDelay = (-Math.random() * 0.3).toFixed(3) + 's';
+    clearTimeout(timer);
+    timer = setTimeout(createEyes, 300);
   });
 </script>
 
