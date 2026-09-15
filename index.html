@@ -14,44 +14,70 @@ zzzz
 
   #eyes { position:fixed; inset:0; z-index:1; overflow:hidden; }
 
-  /* 眼睛眼眶：纯黑椭圆，无高光 */
+  /* 惊悚眼眶：使用不规则多边形裁切，制造撕裂感和内眼角 */
   .eye {
     position:absolute;
-    background:#000;
-    border-radius: 50%; /* 平滑椭圆 */
-    box-shadow: inset 0 0 10px rgba(0,0,0,1);
+    background: #fff; /* 眼白为纯白色 */
+    /* 多边形裁切：模拟不规则的杏仁眼，左侧尖角为内眼角，边缘凹凸不平 */
+    clip-path: polygon(
+      0% 50%,      /* 内眼角（尖锐） */
+      10% 20%,     /* 上边缘内侧 */
+      30% 8%,      /* 上边缘中内 */
+      55% 5%,      /* 上边缘中外 */
+      85% 15%,     /* 上边缘外侧 */
+      100% 45%,    /* 外眼角 */
+      90% 75%,     /* 下边缘外侧 */
+      65% 95%,     /* 下边缘中外 */
+      35% 92%,     /* 下边缘中内 */
+      15% 80%      /* 下边缘内侧 */
+    );
+    /* 内部阴影制造红血丝与深邃感 */
+    box-shadow: inset 0 0 15px rgba(180, 0, 0, 0.9), inset 0 0 5px rgba(255, 0, 0, 0.5);
     opacity: 0;
     transform: scale(0);
-    pointer-events: none; /* 防止挡住底层触摸事件 */
+    pointer-events: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    /* 颤抖动画准备 */
-    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* 外部投影让眼睛在红底上更立体 */
+    filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.9));
+    transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
 
-  /* 眼珠（瞳孔）：极深灰色，无高光，用于体现看向的方向 */
+  /* 眼珠：纯黑色，无高光 */
   .pupil {
     position: absolute;
-    width: 38%;
-    height: 70%;
-    background: #111; /* 比纯黑略亮，但不发光，无高光 */
+    width: 35%;
+    height: 65%;
+    background: #000; /* 纯黑 */
     border-radius: 50%;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    transition: transform 0.1s ease-out; /* 眼珠转动顺滑过渡 */
-    box-shadow: 0 0 5px #000;
+    transition: transform 0.1s ease-out; /* 转动顺滑 */
+    box-shadow: 0 0 8px #000;
   }
 
-  /* 眼睛出现后：弹性缩放 + 持续微微颤抖 */
+  /* 红血丝细节：在眼白上叠加一层微弱的红色脉络 */
+  .eye::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(circle at 20% 30%, rgba(150, 0, 0, 0.4) 0%, transparent 20%),
+      radial-gradient(circle at 80% 70%, rgba(200, 0, 0, 0.3) 0%, transparent 25%),
+      radial-gradient(circle at 50% 50%, transparent 40%, rgba(100, 0, 0, 0.6) 100%);
+    pointer-events: none;
+  }
+
+  /* 眼睛出现后：弹性缩放 + 持续高频颤抖 */
   .eye.spawned {
     opacity: 1;
     transform: scale(1);
-    animation: shake 0.15s linear infinite;
+    animation: shake 0.12s linear infinite;
   }
 
-  /* 微微颤抖动画 */
+  /* 极其微小的颤抖，增加惊悚感 */
   @keyframes shake {
     0% { transform: scale(1) translate(0, 0) rotate(0deg); }
     25% { transform: scale(1) translate(1px, -1px) rotate(1deg); }
@@ -68,7 +94,7 @@ zzzz
     background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,.6) 100%);
   }
 
-  /* 文字样式：黑字加粗黑体，保持在中间 */
+  /* 文字：黑色加粗黑体 */
   .text-wrap {
     position:fixed;
     inset:0;
@@ -92,7 +118,7 @@ zzzz
     text-shadow: none;
   }
 
-  /* 闪烁遮罩层 */
+  /* 闪烁遮罩层：无限疯狂闪 */
   #flash-overlay {
     position: fixed;
     inset: 0;
@@ -102,22 +128,21 @@ zzzz
     z-index: 100;
   }
 
-  /* 一直闪烁的动画 */
   .flashing #flash-overlay {
-    animation: flashInfinite 0.15s infinite;
+    animation: flashInfinite 0.12s infinite;
   }
 
   @keyframes flashInfinite {
     0%, 100% { opacity: 0; }
-    50% { opacity: 0.5; } /* 半透明黑，保证红底和黑字依然可见，但极度闪烁 */
+    50% { opacity: 0.6; } /* 闪烁时半透明黑，保留红色基底与黑字 */
   }
 
   .flashing .text {
-    animation: textFlash 0.15s infinite;
+    animation: textFlash 0.12s infinite;
   }
   @keyframes textFlash {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
+    50% { opacity: 0.5; }
   }
 </style>
 </head>
@@ -141,14 +166,14 @@ zzzz
 <script>
   const eyesLayer = document.getElementById('eyes');
 
-  // 1. 生成四周边缘的眼睛，防止重叠和遮挡文字
+  // 生成四周边缘的眼睛，防重叠，不遮挡文字
   function createEyes() {
     eyesLayer.innerHTML = '';
 
     const screenW = window.innerWidth;
     const screenH = window.innerHeight;
     
-    // 定义四周安全区域（百分比），避开中间文字区域
+    // 划分安全区：上、下、左、右，避开中间文字
     const regions = [
       { xMin: 5, xMax: 95, yMin: 5, yMax: 20 },   // 顶部
       { xMin: 5, xMax: 95, yMin: 80, yMax: 95 },  // 底部
@@ -156,66 +181,61 @@ zzzz
       { xMin: 85, xMax: 95, yMin: 20, yMax: 80 }  // 右侧
     ];
 
-    const placedEyes = []; // 记录已放置的眼睛坐标，防重叠
-    const eyeCount = Math.min(30, Math.max(12, Math.floor(screenW / 50))); // 控制总数量
+    const placedEyes = []; 
+    const eyeCount = Math.min(30, Math.max(12, Math.floor(screenW / 50))); 
 
     for (let i = 0; i < eyeCount; i++) {
-      // 随机选择区域
       const region = regions[i % regions.length];
       
       let x, y, w, h, cx, cy;
       let validPlacement = false;
       let attempts = 0;
 
-      // 防重叠检测算法
+      // 防重叠检测
       while (!validPlacement && attempts < 50) {
-        x = region.xMin + Math.random() * (region.xMax - region.xMin); // 百分比
-        y = region.yMin + Math.random() * (region.yMax - region.yMin); // 百分比
+        x = region.xMin + Math.random() * (region.xMax - region.xMin); 
+        y = region.yMin + Math.random() * (region.yMax - region.yMin); 
         
-        w = Math.random() * 80 + 40; // 眼睛宽度 40~120px
-        h = w * 0.45; // 眼睛高度
+        w = Math.random() * 90 + 50; // 宽度 50~140px
+        h = w * 0.45; 
 
-        // 计算实际屏幕像素中心点
         cx = (x / 100) * screenW;
         cy = (y / 100) * screenH;
 
-        // 检查距离（防止重叠）
         let tooClose = false;
         for (let eye of placedEyes) {
           const dist = Math.hypot(cx - eye.cx, cy - eye.cy);
-          if (dist < (w + eye.w) * 0.8) { // 安全距离
+          if (dist < (w + eye.w) * 0.9) { // 强制拉开距离
             tooClose = true;
             break;
           }
         }
 
-        if (!tooClose) {
-          validPlacement = true;
-        }
+        if (!tooClose) validPlacement = true;
         attempts++;
       }
 
-      // 如果尝试50次都找不到位置，放弃这只眼睛
       if (!validPlacement) continue;
 
-      // 记录本次位置
       placedEyes.push({ cx, cy, w });
 
-      // 创建 DOM
       const el = document.createElement('div');
       el.className = 'eye';
       
+      // 随机左右翻转，让内眼角有的朝左，有的朝右，增加怪异感
+      if (Math.random() > 0.5) {
+        el.style.transform = 'scaleX(-1)';
+      }
+
       const pupil = document.createElement('div');
       pupil.className = 'pupil';
       el.appendChild(pupil);
 
-      // 设置样式
       el.style.width = w + 'px';
       el.style.height = h + 'px';
       el.style.left = x + 'vw';
       el.style.top = y + 'vh';
       
-      // 记录眼睛的实际像素中心，供鼠标交互使用（忽略抖动偏差）
       el.dataset.cx = cx;
       el.dataset.cy = cy;
 
@@ -223,11 +243,10 @@ zzzz
     }
   }
 
-  // 2. 交互：手指/鼠标触碰屏幕，眼珠看向触碰点
+  // 手指/鼠标交互：眼球看向触点
   function handleMove(e) {
     let clientX, clientY;
     
-    // 兼容触摸和鼠标事件
     if (e.touches && e.touches.length > 0) {
       clientX = e.touches[0].clientX;
       clientY = e.touches[0].clientY;
@@ -239,50 +258,47 @@ zzzz
       clientY = e.clientY;
     }
 
-    // 遍历所有眼睛，计算角度
     const eyes = document.querySelectorAll('.eye');
     eyes.forEach(eye => {
-      const eyeX = parseFloat(eye.dataset.cx);
-      const eyeY = parseFloat(eye.dataset.cy);
+      // 使用 getBoundingClientRect 获取实时的屏幕坐标（防抖动偏移）
+      const rect = eye.getBoundingClientRect();
+      const eyeX = rect.left + rect.width / 2;
+      const eyeY = rect.top + rect.height / 2;
       
-      // 计算眼睛到触点的角度
       const angle = Math.atan2(clientY - eyeY, clientX - eyeX);
       
-      // 瞳孔最大偏移量（眼睛宽度的15%）
       const eyeWidth = parseFloat(eye.style.width);
-      const maxShift = eyeWidth * 0.15;
+      const maxShift = eyeWidth * 0.15; // 眼珠最大偏移量
       
       const dx = Math.cos(angle) * maxShift;
       const dy = Math.sin(angle) * maxShift;
       
       const pupil = eye.querySelector('.pupil');
       if (pupil) {
-        // 更新瞳孔位置，保留基础居中偏移
-        pupil.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+        // 注意：如果眼睛被镜像翻转，X轴方向需要反转
+        const isFlipped = eye.style.transform.includes('scaleX(-1)');
+        const finalDx = isFlipped ? -dx : dx;
+        
+        pupil.style.transform = `translate(calc(-50% + ${finalDx}px), calc(-50% + ${dy}px))`;
       }
     });
   }
 
-  // 监听事件 (移动端加上 passive: false 避免滚动冲突)
   document.addEventListener('mousemove', handleMove);
   document.addEventListener('touchmove', handleMove, { passive: false });
   document.addEventListener('touchstart', handleMove, { passive: false });
 
-  // 3. 初始化与动画序列
   createEyes();
 
-  // 1.5秒后，触发无限闪烁，并让眼睛瞬间出现
+  // 1.5秒后：屏幕开始无限疯狂闪烁，眼睛瞬间弹出
   setTimeout(() => {
-    // 开启疯狂闪烁（无限循环）
     document.body.classList.add('flashing');
 
-    // 眼睛突然弹出
     document.querySelectorAll('.eye').forEach(eye => {
       eye.classList.add('spawned');
     });
   }, 1500);
 
-  // 窗口调整大小时重新生成布局
   let timer;
   window.addEventListener('resize', () => {
     clearTimeout(timer);
