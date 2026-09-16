@@ -89,6 +89,7 @@ zzzz
     background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,.6) 100%);
   }
 
+  /* 文字：黑色加粗黑体 */
   .text-wrap {
     position:fixed;
     inset:0;
@@ -105,7 +106,7 @@ zzzz
     color:#000;
     font-weight:900;
     font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Heiti SC", sans-serif;
-    font-size:clamp(26px, 6vw, 64px);
+    font-size:clamp(32px, 8vw, 80px);
     line-height:1.55;
     text-align:center;
     letter-spacing:.06em;
@@ -146,21 +147,15 @@ zzzz
 <div class="vignette"></div>
 
 <div class="text-wrap">
-  <div class="text">
-    我很痛苦<br>
-    我感觉到我的灵魂似乎割裂了<br>
-    所有人都这么做吗<br>
-    我不理解<br>
-    究竟是我脑子出问题了<br>
-    还是他们都不正常呢？
-  </div>
+  <div class="text">我看见你了</div>
 </div>
 
 <script>
-  // ================= 音频系统 =================
+  // ================= 音频系统（全新升级） =================
   let audioCtx = null;
   let isAudioInitialized = false;
   let flickerSoundInterval = null;
+  let reverseSoundInterval = null;
 
   function initAudio() {
     if (isAudioInitialized) return;
@@ -169,55 +164,144 @@ zzzz
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     audioCtx = new AudioContext();
 
-    // 1. 启动低频环境轰鸣（带有微弱心跳脉动）
+    // 1. 低频环境轰鸣（带有微弱心跳脉动）
     const lowOsc = audioCtx.createOscillator();
     const lowGain = audioCtx.createGain();
     const lfo = audioCtx.createOscillator();
     const lfoGain = audioCtx.createGain();
 
     lowOsc.type = 'sawtooth';
-    lowOsc.frequency.value = 45; // 低沉频率
-    
-    lfo.frequency.value = 0.5; // 脉动速度（0.5Hz，每秒半次，类似缓慢心跳）
-    lfoGain.gain.value = 0.5; // 脉动深度
-    
+    lowOsc.frequency.value = 40;
+    lfo.frequency.value = 0.4;
+    lfoGain.gain.value = 0.5;
     lfo.connect(lfoGain);
-    lfoGain.connect(lowGain.gain); // 用LFO调制音量
-    
-    lowGain.gain.value = 0.1; // 基础音量
-    
+    lfoGain.connect(lowGain.gain);
+    lowGain.gain.value = 0.15;
     lowOsc.connect(lowGain);
     lowGain.connect(audioCtx.destination);
-    
     lowOsc.start();
     lfo.start();
 
-    // 2. 启动无限闪烁的电流声
+    // 2. 人在低声细语（带通滤波白噪声 + LFO 调制）
+    const whisperBufferSize = audioCtx.sampleRate * 2; // 2秒缓冲
+    const whisperBuffer = audioCtx.createBuffer(1, whisperBufferSize, audioCtx.sampleRate);
+    const whisperData = whisperBuffer.getChannelData(0);
+    for (let i = 0; i < whisperBufferSize; i++) {
+        whisperData[i] = Math.random() * 2 - 1; // 生成白噪声
+    }
+    const whisperSource = audioCtx.createBufferSource();
+    whisperSource.buffer = whisperBuffer;
+    whisperSource.loop = true;
+    
+    const whisperFilter = audioCtx.createBiquadFilter();
+    whisperFilter.type = 'bandpass';
+    whisperFilter.frequency.value = 1000; // 人声频段
+    whisperFilter.Q.value = 2;
+    
+    const whisperLfo = audioCtx.createOscillator();
+    const whisperLfoGain = audioCtx.createGain();
+    whisperLfo.frequency.value = 0.3; // 极慢的波动，模拟呼吸节奏
+    whisperLfoGain.gain.value = 500; // 频率波动范围
+    whisperLfo.connect(whisperLfoGain);
+    whisperLfoGain.connect(whisperFilter.frequency);
+    
+    const whisperGain = audioCtx.createGain();
+    whisperGain.gain.value = 0.04; // 音量很低，隐约能听见
+    
+    whisperSource.connect(whisperFilter);
+    whisperFilter.connect(whisperGain);
+    whisperGain.connect(audioCtx.destination);
+    whisperSource.start();
+    whisperLfo.start();
+
+    // 3. 开启无限闪烁电流声
     flickerSoundInterval = setInterval(playFlickerSound, 130);
+    
+    // 4. 开启随机混乱倒放声（每2到5秒随机触发一次）
+    reverseSoundInterval = setInterval(() => {
+      if (Math.random() > 0.6) playReverseSound();
+    }, 3000);
   }
 
-  // 短促、随机、尖锐的电流声
+  // 短促电流声
   function playFlickerSound() {
     if (!audioCtx || !document.body.classList.contains('flashing')) return;
-    if (Math.random() < 0.3) return; // 随机跳过一些声音，使其不规则
+    if (Math.random() < 0.3) return; 
     
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     
     osc.type = 'square';
     osc.frequency.setValueAtTime(800 + Math.random() * 800, audioCtx.currentTime);
-    
     gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
     
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    
     osc.start();
     osc.stop(audioCtx.currentTime + 0.05);
   }
 
-  // 3. 1.5秒时的惊吓爆发声
+  // 混乱倒放声
+  function playReverseSound() {
+    if (!audioCtx) return;
+    
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+    
+    osc.type = 'sawtooth';
+    // 从极高快速滑落到极低，模拟倒带
+    osc.frequency.setValueAtTime(1500, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.4);
+    
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(2000, audioCtx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.4);
+    
+    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+    
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.4);
+  }
+
+  // 湿润粘稠声（手指滑动时触发）
+  let lastStickySoundTime = 0;
+  function playStickySound() {
+    if (!audioCtx) return;
+    const now = Date.now();
+    if (now - lastStickySoundTime < 50) return; // 50ms 节流
+    lastStickySoundTime = now;
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+    
+    // 低频震荡模拟粘液拉扯
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(150 + Math.random() * 100, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+    
+    filter.type = 'lowpass';
+    filter.frequency.value = 400;
+    
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+    
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.1);
+  }
+
+  // 惊吓爆发声
   function playJumpscare() {
     if (!audioCtx) return;
     
@@ -233,43 +317,8 @@ zzzz
     
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    
     osc.start();
     osc.stop(audioCtx.currentTime + 0.5);
-  }
-
-  // 4. 眼球转动的摩擦声（带节流防卡顿）
-  let lastEyeSoundTime = 0;
-  function playEyeMoveSound() {
-    if (!audioCtx) return;
-    const now = Date.now();
-    if (now - lastEyeSoundTime < 60) return; // 60ms 节流，防止声音过于密集
-    lastEyeSoundTime = now;
-
-    const bufferSize = audioCtx.sampleRate * 0.02; // 20ms 极短噪音
-    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
-    
-    const noise = audioCtx.createBufferSource();
-    noise.buffer = buffer;
-    
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 300 + Math.random() * 200;
-    filter.Q.value = 5;
-    
-    const gain = audioCtx.createGain();
-    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.02);
-    
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(audioCtx.destination);
-    
-    noise.start();
   }
 
 
@@ -372,20 +421,18 @@ zzzz
       
       const eyeWidth = parseFloat(eye.style.width);
       
-      // 扩大移动范围 (22%)
       const maxShift = eyeWidth * 0.22; 
       
       const dx = Math.cos(angle) * maxShift;
       const dy = Math.sin(angle) * maxShift;
       
-      // 生理性缩放
       let scaleFactor = 1;
       const normalizedDy = dy / eyeWidth; 
       
       if (normalizedDy < 0) {
-        scaleFactor = 1 + Math.abs(normalizedDy) * 2.0; // 向上看放大
+        scaleFactor = 1 + Math.abs(normalizedDy) * 2.0; 
       } else {
-        scaleFactor = 1 - normalizedDy * 1.6; // 向下看缩小
+        scaleFactor = 1 - normalizedDy * 1.6; 
       }
       
       scaleFactor = Math.min(1.45, Math.max(0.65, scaleFactor));
@@ -396,8 +443,8 @@ zzzz
       }
     });
 
-    // 播放眼珠移动的声音
-    playEyeMoveSound();
+    // 播放湿润粘稠声
+    playStickySound();
   }
 
   document.addEventListener('mousemove', handleMove);
@@ -408,7 +455,6 @@ zzzz
 
   // 1.5秒后：屏幕疯狂闪烁，眼睛出现，伴随惊吓音效
   setTimeout(() => {
-    // 尝试初始化音频（如果用户还没碰过屏幕，可能被浏览器拦截，但碰过就会播放）
     initAudio(); 
     
     document.body.classList.add('flashing');
@@ -417,7 +463,6 @@ zzzz
       eye.classList.add('spawned');
     });
 
-    // 播放惊吓爆发声
     playJumpscare();
   }, 1500);
 
