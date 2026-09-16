@@ -30,7 +30,6 @@ zzzz
       35% 92%,     /* 下边缘中内 */
       15% 80%      /* 下边缘内侧 */
     );
-    /* 内部红血丝与深邃感 */
     box-shadow: inset 0 0 15px rgba(180, 0, 0, 0.9), inset 0 0 5px rgba(255, 0, 0, 0.5);
     opacity: 0;
     transform: scale(0);
@@ -42,7 +41,7 @@ zzzz
     transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
 
-  /* 眼珠：纯黑色，无高光 */
+  /* 眼珠：纯黑色 */
   .pupil {
     position: absolute;
     width: 35%;
@@ -52,7 +51,7 @@ zzzz
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    transition: transform 0.08s ease-out; /* 加快一点反应速度 */
+    transition: transform 0.08s ease-out;
     box-shadow: 0 0 8px #000;
   }
 
@@ -68,7 +67,6 @@ zzzz
     pointer-events: none;
   }
 
-  /* 眼睛出现后：弹性缩放 + 持续高频颤抖 */
   .eye.spawned {
     opacity: 1;
     transform: scale(1);
@@ -91,7 +89,6 @@ zzzz
     background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,.6) 100%);
   }
 
-  /* 文字：黑色加粗黑体 */
   .text-wrap {
     position:fixed;
     inset:0;
@@ -115,7 +112,6 @@ zzzz
     text-shadow: none;
   }
 
-  /* 闪烁遮罩层：无限疯狂闪 */
   #flash-overlay {
     position: fixed;
     inset: 0;
@@ -161,6 +157,123 @@ zzzz
 </div>
 
 <script>
+  // ================= 音频系统 =================
+  let audioCtx = null;
+  let isAudioInitialized = false;
+  let flickerSoundInterval = null;
+
+  function initAudio() {
+    if (isAudioInitialized) return;
+    isAudioInitialized = true;
+    
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContext();
+
+    // 1. 启动低频环境轰鸣（带有微弱心跳脉动）
+    const lowOsc = audioCtx.createOscillator();
+    const lowGain = audioCtx.createGain();
+    const lfo = audioCtx.createOscillator();
+    const lfoGain = audioCtx.createGain();
+
+    lowOsc.type = 'sawtooth';
+    lowOsc.frequency.value = 45; // 低沉频率
+    
+    lfo.frequency.value = 0.5; // 脉动速度（0.5Hz，每秒半次，类似缓慢心跳）
+    lfoGain.gain.value = 0.5; // 脉动深度
+    
+    lfo.connect(lfoGain);
+    lfoGain.connect(lowGain.gain); // 用LFO调制音量
+    
+    lowGain.gain.value = 0.1; // 基础音量
+    
+    lowOsc.connect(lowGain);
+    lowGain.connect(audioCtx.destination);
+    
+    lowOsc.start();
+    lfo.start();
+
+    // 2. 启动无限闪烁的电流声
+    flickerSoundInterval = setInterval(playFlickerSound, 130);
+  }
+
+  // 短促、随机、尖锐的电流声
+  function playFlickerSound() {
+    if (!audioCtx || !document.body.classList.contains('flashing')) return;
+    if (Math.random() < 0.3) return; // 随机跳过一些声音，使其不规则
+    
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(800 + Math.random() * 800, audioCtx.currentTime);
+    
+    gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.05);
+  }
+
+  // 3. 1.5秒时的惊吓爆发声
+  function playJumpscare() {
+    if (!audioCtx) return;
+    
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.5);
+    
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.5);
+  }
+
+  // 4. 眼球转动的摩擦声（带节流防卡顿）
+  let lastEyeSoundTime = 0;
+  function playEyeMoveSound() {
+    if (!audioCtx) return;
+    const now = Date.now();
+    if (now - lastEyeSoundTime < 60) return; // 60ms 节流，防止声音过于密集
+    lastEyeSoundTime = now;
+
+    const bufferSize = audioCtx.sampleRate * 0.02; // 20ms 极短噪音
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buffer;
+    
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 300 + Math.random() * 200;
+    filter.Q.value = 5;
+    
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.02);
+    
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    noise.start();
+  }
+
+
+  // ================= 视觉与交互系统 =================
   const eyesLayer = document.getElementById('eyes');
 
   function createEyes() {
@@ -232,8 +345,10 @@ zzzz
     }
   }
 
-  // 手指/鼠标交互：眼球看向触点，并带生理缩放
   function handleMove(e) {
+    // 首次触碰或移动时初始化音频
+    initAudio();
+
     let clientX, clientY;
     
     if (e.touches && e.touches.length > 0) {
@@ -257,33 +372,32 @@ zzzz
       
       const eyeWidth = parseFloat(eye.style.width);
       
-      // 1. 扩大移动范围（从 12% 提高到 22%，让眼珠转动更明显）
+      // 扩大移动范围 (22%)
       const maxShift = eyeWidth * 0.22; 
       
       const dx = Math.cos(angle) * maxShift;
       const dy = Math.sin(angle) * maxShift;
       
-      // 2. 生理性缩放算法：往上看看放大，往下看缩小
+      // 生理性缩放
       let scaleFactor = 1;
-      const normalizedDy = dy / eyeWidth; // 归一化垂直偏移量（大致范围 -0.22 到 0.22）
+      const normalizedDy = dy / eyeWidth; 
       
       if (normalizedDy < 0) {
-        // 手指在上方（向上看） -> 瞳孔放大（最大放大到1.45倍）
-        scaleFactor = 1 + Math.abs(normalizedDy) * 2.0;
+        scaleFactor = 1 + Math.abs(normalizedDy) * 2.0; // 向上看放大
       } else {
-        // 手指在下方（向下看） -> 瞳孔缩小（最小缩小到0.65倍）
-        scaleFactor = 1 - normalizedDy * 1.6;
+        scaleFactor = 1 - normalizedDy * 1.6; // 向下看缩小
       }
       
-      // 限制极限范围，防止瞳孔完全消失或撑爆眼眶
       scaleFactor = Math.min(1.45, Math.max(0.65, scaleFactor));
       
       const pupil = eye.querySelector('.pupil');
       if (pupil) {
-        // 同时应用位移和缩放
         pupil.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(${scaleFactor})`;
       }
     });
+
+    // 播放眼珠移动的声音
+    playEyeMoveSound();
   }
 
   document.addEventListener('mousemove', handleMove);
@@ -292,12 +406,19 @@ zzzz
 
   createEyes();
 
+  // 1.5秒后：屏幕疯狂闪烁，眼睛出现，伴随惊吓音效
   setTimeout(() => {
+    // 尝试初始化音频（如果用户还没碰过屏幕，可能被浏览器拦截，但碰过就会播放）
+    initAudio(); 
+    
     document.body.classList.add('flashing');
 
     document.querySelectorAll('.eye').forEach(eye => {
       eye.classList.add('spawned');
     });
+
+    // 播放惊吓爆发声
+    playJumpscare();
   }, 1500);
 
   let timer;
