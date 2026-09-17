@@ -76,69 +76,88 @@ zzzz
     border-radius: 50%; background: #000; transform: translate(-50%, -50%);
   }
 
-  /* 文字故障层 */
+  /* ================= 恐怖谷文字层 ================= */
   .text-wrap {
     position: fixed; inset: 0; z-index: 10;
     display: flex; align-items: center; justify-content: center;
-    padding: 6vw; pointer-events: none;
+    padding: 4vw; pointer-events: none;
+    overflow: hidden;
   }
+  
   .glitch-text {
     position: relative;
-    color: #000; /* 黑字 */
+    color: #000; /* 黑字主体 */
     font-weight: 900;
-    font-size: clamp(50px, 16vw, 160px);
-    letter-spacing: 0.05em;
-    /* 蓝色描边与色差 */
-    text-shadow: 4px 0 0 #0033ff, -4px 0 0 #00ffff, 0 0 20px rgba(0,51,255,0.8);
-    animation: textGlitch 0.2s infinite alternate;
+    font-size: clamp(60px, 18vw, 180px);
+    /* 黑红文字：黑字，暗红描边，加上血色阴影 */
+    -webkit-text-stroke: 2px #8b0000; 
+    text-shadow: 
+      4px 0 0 #ff0000, -4px 0 0 #4a0000,
+      0 0 25px rgba(255,0,0,0.9),
+      0 0 50px rgba(255,0,0,0.6),
+      0 0 80px rgba(139,0,0,0.8);
+    /* 整体呼吸扭曲，类似怪物在喘息 */
+    animation: textBreathe 3s infinite alternate ease-in-out, textSkew 5s infinite alternate;
   }
-  /* 制造重叠与切片撕裂感 */
+
+  /* 制造文字切片、撕裂与重叠感 */
   .glitch-text::before, .glitch-text::after {
     content: "我看见你了";
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     background: transparent; overflow: hidden;
   }
   .glitch-text::before {
-    left: 3px; text-shadow: -3px 0 #ff00ff; color: #000;
+    left: 4px; color: #000;
+    -webkit-text-stroke: 2px #ff0000;
+    text-shadow: -4px 0 #ff0000;
     clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-    animation: glitchSlice 1.5s infinite linear alternate-reverse;
+    animation: glitchSlice 1.2s infinite linear alternate-reverse;
   }
   .glitch-text::after {
-    left: -3px; text-shadow: 3px 0 #00ffff; color: #000;
+    left: -4px; color: #000;
+    -webkit-text-stroke: 2px #4a0000;
+    text-shadow: 4px 0 #4a0000;
     clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
-    animation: glitchSlice 2s infinite linear alternate-reverse;
+    animation: glitchSlice 1.8s infinite linear alternate-reverse;
   }
 
-  /* 文字不规则扭曲（消除僵硬感） */
+  /* 文字的单字扭曲（由JS动态生成） */
   .glitch-text span {
     display: inline-block;
-    animation: textWarp 3s infinite alternate ease-in-out;
-  }
-  @keyframes textWarp {
-    0% { transform: rotate(-3deg) translateY(4px) scale(1.05); }
-    100% { transform: rotate(3deg) translateY(-4px) scale(0.95); }
+    transform-origin: center bottom;
+    /* 每个字单独的神经质抽搐 */
+    animation: textSpasm 0.8s infinite alternate ease-in-out;
   }
 
-  @keyframes textGlitch {
-    0% { transform: skewX(0deg); }
-    20% { transform: skewX(-10deg); }
-    40% { transform: skewX(5deg); }
-    60% { transform: skewX(-5deg); }
-    100% { transform: skewX(0deg); }
+  /* 整体呼吸：横向拉伸挤压，纵向压缩拉伸 */
+  @keyframes textBreathe {
+    0% { transform: scale(1.05, 0.9) skewX(2deg); }
+    100% { transform: scale(0.95, 1.15) skewX(-3deg); }
   }
+  @keyframes textSkew {
+    0% { transform: skewY(0deg); }
+    50% { transform: skewY(2deg); }
+    100% { transform: skewY(-2deg); }
+  }
+  /* 单字痉挛 */
+  @keyframes textSpasm {
+    0% { filter: blur(0px); }
+    100% { filter: blur(1px); }
+  }
+
   @keyframes glitchSlice {
     0% { transform: translate(0); clip-path: polygon(0 0, 100% 0, 100% 15%, 0 15%); }
-    20% { transform: translate(-5px, 2px); clip-path: polygon(0 20%, 100% 20%, 100% 35%, 0 35%); }
-    40% { transform: translate(5px, -2px); clip-path: polygon(0 40%, 100% 40%, 100% 55%, 0 55%); }
-    60% { transform: translate(-5px, 4px); clip-path: polygon(0 60%, 100% 60%, 100% 75%, 0 75%); }
-    80% { transform: translate(5px, -4px); clip-path: polygon(0 80%, 100% 80%, 100% 95%, 0 95%); }
+    20% { transform: translate(-6px, 3px); clip-path: polygon(0 20%, 100% 20%, 100% 35%, 0 35%); }
+    40% { transform: translate(6px, -3px); clip-path: polygon(0 40%, 100% 40%, 100% 55%, 0 55%); }
+    60% { transform: translate(-6px, 5px); clip-path: polygon(0 60%, 100% 60%, 100% 75%, 0 75%); }
+    80% { transform: translate(6px, -5px); clip-path: polygon(0 80%, 100% 80%, 100% 95%, 0 95%); }
     100% { transform: translate(0); clip-path: polygon(0 10%, 100% 10%, 100% 30%, 0 30%); }
   }
 
   /* 暗角 */
   .vignette {
     position: fixed; inset: 0; z-index: 15; pointer-events: none;
-    background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.85) 100%);
+    background: radial-gradient(circle at center, transparent 15%, rgba(0,0,0,0.9) 100%);
   }
 
   /* 疯狂闪烁遮罩 */
@@ -148,7 +167,7 @@ zzzz
   .flashing #flash-overlay { animation: flashInfinite 0.08s infinite; }
   @keyframes flashInfinite {
     0%, 100% { opacity: 0; }
-    50% { opacity: 0.8; } /* 极强烈的闪烁 */
+    50% { opacity: 0.85; } /* 极强烈的闪烁，制造心理压迫 */
   }
 </style>
 </head>
@@ -167,11 +186,9 @@ zzzz
 <div id="flash-overlay"></div>
 
 <script>
-  // ================= 音频系统 (保留全部) =================
-  let audioCtx = null;
-  let isAudioInitialized = false;
-  let flickerSoundInterval = null;
-  let reverseSoundInterval = null;
+  // ================= 音频系统 =================
+  let audioCtx = null; let isAudioInitialized = false;
+  let flickerSoundInterval = null; let reverseSoundInterval = null;
 
   function initAudio() {
     if (isAudioInitialized) return;
@@ -180,10 +197,8 @@ zzzz
     audioCtx = new AudioContext();
 
     // 1. 低频轰鸣
-    const lowOsc = audioCtx.createOscillator();
-    const lowGain = audioCtx.createGain();
-    const lfo = audioCtx.createOscillator();
-    const lfoGain = audioCtx.createGain();
+    const lowOsc = audioCtx.createOscillator(); const lowGain = audioCtx.createGain();
+    const lfo = audioCtx.createOscillator(); const lfoGain = audioCtx.createGain();
     lowOsc.type = 'sawtooth'; lowOsc.frequency.value = 35;
     lfo.frequency.value = 0.4; lfoGain.gain.value = 0.5;
     lfo.connect(lfoGain); lfoGain.connect(lowGain.gain);
@@ -251,9 +266,38 @@ zzzz
     osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.5);
   }
 
-  // ================= 背景巨大幽灵眼 =================
+  // ================= 恐怖谷文字处理 =================
+  (function distortText() {
+    const el = document.getElementById('spookyText');
+    const text = el.textContent;
+    el.innerHTML = '';
+    
+    for (let i = 0; i < text.length; i++) {
+      const span = document.createElement('span');
+      span.textContent = text[i];
+      
+      // 极度的不规则形变，制造“文字恐怖谷”
+      const rot = (Math.random() - 0.5) * 25;          // 剧烈旋转 -12.5deg ~ 12.5deg
+      const xOff = (Math.random() - 0.5) * 20;         // 水平错位
+      const yOff = (Math.random() - 0.5) * 25;         // 垂直错位
+      const scaleX = 0.6 + Math.random() * 1.2;        // 横向极度拉伸或压扁 (0.6~1.8)
+      const scaleY = 0.7 + Math.random() * 1.5;        // 纵向极度拉伸或压扁 (0.7~2.2)
+      const skewX = (Math.random() - 0.5) * 15;        // 倾斜
+      
+      span.style.transform = `rotate(${rot}deg) translate(${xOff}px, ${yOff}px) scale(${scaleX}, ${scaleY}) skewX(${skewX}deg)`;
+      
+      // 随机化每个字的痉挛动画延迟，让它们错开
+      span.style.animationDelay = (Math.random() * -2) + 's';
+      span.style.animationDuration = (0.4 + Math.random() * 0.8) + 's';
+      
+      el.appendChild(span);
+    }
+  })();
+
+  // ================= 背景幽灵眼 =================
   function createBgEyes() {
     const container = document.getElementById('bg-eyes');
+    container.innerHTML = '';
     for (let i = 0; i < 6; i++) {
       const eye = document.createElement('div');
       eye.className = 'bg-eye';
@@ -353,7 +397,7 @@ zzzz
   document.addEventListener('touchmove', handleMove, { passive: false });
   document.addEventListener('touchstart', handleMove, { passive: false });
 
-  // 初始化所有元素
+  // 初始化
   createBgEyes();
   createEyes();
 
