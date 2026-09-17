@@ -24,13 +24,13 @@ zzzz
 
   /* 扫描线覆盖层 */
   #scanlines {
-    position: fixed; inset: 0; z-index: 2; pointer-events: none;
+    position: fixed; inset: 0; z-index: 15; pointer-events: none;
     background: repeating-linear-gradient(0deg, rgba(0,0,0,0.6) 0px, rgba(0,0,0,0.6) 2px, transparent 2px, transparent 4px);
     opacity: 0.8;
   }
 
   /* 背景巨大幽灵眼层 */
-  #bg-eyes { position: fixed; inset: 0; z-index: 3; overflow: hidden; pointer-events: none; }
+  #bg-eyes { position: fixed; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
   .bg-eye {
     position: absolute;
     background: radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.8) 20%, rgba(0,0,0,0) 70%);
@@ -47,8 +47,8 @@ zzzz
     100% { transform: translate(20px, 20px) scale(1.1); }
   }
 
-  /* 互动眼睛层 */
-  #eyes { position: fixed; inset: 0; z-index: 4; overflow: hidden; }
+  /* 互动眼睛层（遍布全屏） */
+  #eyes { position: fixed; inset: 0; z-index: 10; overflow: hidden; }
   .eye {
     position: absolute; opacity: 0; transform: scale(0); pointer-events: auto;
     cursor: pointer; -webkit-tap-highlight-color: transparent;
@@ -76,98 +76,95 @@ zzzz
     border-radius: 50%; background: #000; transform: translate(-50%, -50%);
   }
 
-  /* ================= 恐怖谷文字层 ================= */
-  .text-wrap {
-    position: fixed; inset: 0; z-index: 10;
-    display: flex; align-items: center; justify-content: center;
-    padding: 4vw; pointer-events: none;
-    overflow: hidden;
+  /* ================= 文字层（满屏幕、极端恐怖谷） ================= */
+  #text-wall {
+    position: fixed; inset: 0; z-index: 50; pointer-events: none; overflow: hidden;
   }
   
-  .glitch-text {
-    position: relative;
-    color: #000; /* 黑字主体 */
+  .glitch-word {
+    position: absolute;
+    color: #000;
     font-weight: 900;
-    font-size: clamp(60px, 18vw, 180px);
-    /* 黑红文字：黑字，暗红描边，加上血色阴影 */
+    font-size: clamp(30px, 8vw, 80px);
+    letter-spacing: -0.05em;
     -webkit-text-stroke: 2px #8b0000; 
     text-shadow: 
-      4px 0 0 #ff0000, -4px 0 0 #4a0000,
-      0 0 25px rgba(255,0,0,0.9),
-      0 0 50px rgba(255,0,0,0.6),
+      4px 4px 0 #ff0000, -4px -4px 0 #4a0000,
+      0 0 20px rgba(255,0,0,0.9),
+      0 0 40px rgba(255,0,0,0.6),
       0 0 80px rgba(139,0,0,0.8);
-    /* 整体呼吸扭曲，类似怪物在喘息 */
-    animation: textBreathe 3s infinite alternate ease-in-out, textSkew 5s infinite alternate;
+    animation: textBreathe 2s infinite alternate ease-in-out, textSkew 3s infinite alternate;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* 制造文字切片、撕裂与重叠感 */
-  .glitch-text::before, .glitch-text::after {
+  .glitch-word::before, .glitch-word::after {
     content: "我看见你了";
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     background: transparent; overflow: hidden;
-  }
-  .glitch-text::before {
-    left: 4px; color: #000;
     -webkit-text-stroke: 2px #ff0000;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .glitch-word::before {
+    left: 4px; color: #000;
     text-shadow: -4px 0 #ff0000;
     clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-    animation: glitchSlice 1.2s infinite linear alternate-reverse;
+    animation: glitchSlice 0.6s infinite linear alternate-reverse;
   }
-  .glitch-text::after {
+  .glitch-word::after {
     left: -4px; color: #000;
-    -webkit-text-stroke: 2px #4a0000;
     text-shadow: 4px 0 #4a0000;
     clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
-    animation: glitchSlice 1.8s infinite linear alternate-reverse;
+    animation: glitchSlice 1s infinite linear alternate-reverse;
   }
 
-  /* 文字的单字扭曲（由JS动态生成） */
-  .glitch-text span {
+  /* 单字极度扭曲（由JS生成） */
+  .glitch-word span {
     display: inline-block;
-    transform-origin: center bottom;
-    /* 每个字单独的神经质抽搐 */
-    animation: textSpasm 0.8s infinite alternate ease-in-out;
+    transform-origin: center center;
+    animation: textSpasm 0.4s infinite alternate ease-in-out;
+    position: relative;
   }
 
-  /* 整体呼吸：横向拉伸挤压，纵向压缩拉伸 */
   @keyframes textBreathe {
-    0% { transform: scale(1.05, 0.9) skewX(2deg); }
-    100% { transform: scale(0.95, 1.15) skewX(-3deg); }
+    0% { transform: scale(1.3, 0.7) skewX(6deg); }
+    100% { transform: scale(0.7, 1.4) skewX(-6deg); }
   }
   @keyframes textSkew {
     0% { transform: skewY(0deg); }
-    50% { transform: skewY(2deg); }
-    100% { transform: skewY(-2deg); }
+    50% { transform: skewY(6deg); }
+    100% { transform: skewY(-6deg); }
   }
-  /* 单字痉挛 */
   @keyframes textSpasm {
-    0% { filter: blur(0px); }
-    100% { filter: blur(1px); }
+    0% { filter: blur(0px); transform: translateY(0px); }
+    100% { filter: blur(2px); transform: translateY(4px); }
   }
 
   @keyframes glitchSlice {
-    0% { transform: translate(0); clip-path: polygon(0 0, 100% 0, 100% 15%, 0 15%); }
-    20% { transform: translate(-6px, 3px); clip-path: polygon(0 20%, 100% 20%, 100% 35%, 0 35%); }
-    40% { transform: translate(6px, -3px); clip-path: polygon(0 40%, 100% 40%, 100% 55%, 0 55%); }
-    60% { transform: translate(-6px, 5px); clip-path: polygon(0 60%, 100% 60%, 100% 75%, 0 75%); }
-    80% { transform: translate(6px, -5px); clip-path: polygon(0 80%, 100% 80%, 100% 95%, 0 95%); }
+    0% { transform: translate(0); clip-path: polygon(0 0, 100% 0, 100% 20%, 0 20%); }
+    25% { transform: translate(-12px, 6px); clip-path: polygon(0 25%, 100% 25%, 100% 45%, 0 45%); }
+    50% { transform: translate(12px, -6px); clip-path: polygon(0 50%, 100% 50%, 100% 70%, 0 70%); }
+    75% { transform: translate(-12px, 8px); clip-path: polygon(0 75%, 100% 75%, 100% 95%, 0 95%); }
     100% { transform: translate(0); clip-path: polygon(0 10%, 100% 10%, 100% 30%, 0 30%); }
   }
 
   /* 暗角 */
   .vignette {
-    position: fixed; inset: 0; z-index: 15; pointer-events: none;
-    background: radial-gradient(circle at center, transparent 15%, rgba(0,0,0,0.9) 100%);
+    position: fixed; inset: 0; z-index: 20; pointer-events: none;
+    background: radial-gradient(circle at center, transparent 5%, rgba(0,0,0,0.95) 100%);
   }
 
   /* 疯狂闪烁遮罩 */
   #flash-overlay {
-    position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 100;
+    position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 45;
   }
   .flashing #flash-overlay { animation: flashInfinite 0.08s infinite; }
   @keyframes flashInfinite {
     0%, 100% { opacity: 0; }
-    50% { opacity: 0.85; } /* 极强烈的闪烁，制造心理压迫 */
+    50% { opacity: 0.9; }
   }
 </style>
 </head>
@@ -177,12 +174,8 @@ zzzz
 <div id="scanlines"></div>
 <div id="bg-eyes"></div>
 <div id="eyes"></div>
+<div id="text-wall"></div>
 <div class="vignette"></div>
-
-<div class="text-wrap">
-  <div class="glitch-text" id="spookyText">我看见你了</div>
-</div>
-
 <div id="flash-overlay"></div>
 
 <script>
@@ -196,7 +189,6 @@ zzzz
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     audioCtx = new AudioContext();
 
-    // 1. 低频轰鸣
     const lowOsc = audioCtx.createOscillator(); const lowGain = audioCtx.createGain();
     const lfo = audioCtx.createOscillator(); const lfoGain = audioCtx.createGain();
     lowOsc.type = 'sawtooth'; lowOsc.frequency.value = 35;
@@ -206,7 +198,6 @@ zzzz
     lowOsc.connect(lowGain); lowGain.connect(audioCtx.destination);
     lowOsc.start(); lfo.start();
 
-    // 2. 模糊细语
     const whisperBufferSize = audioCtx.sampleRate * 2;
     const whisperBuffer = audioCtx.createBuffer(1, whisperBufferSize, audioCtx.sampleRate);
     const whisperData = whisperBuffer.getChannelData(0);
@@ -220,7 +211,6 @@ zzzz
     whisperSource.connect(whisperFilter); whisperFilter.connect(whisperGain); whisperGain.connect(audioCtx.destination);
     whisperSource.start(); whisperLfo.start();
 
-    // 3. 电流与倒放
     flickerSoundInterval = setInterval(playFlickerSound, 100);
     reverseSoundInterval = setInterval(() => { if (Math.random() > 0.6) playReverseSound(); }, 2500);
   }
@@ -266,39 +256,65 @@ zzzz
     osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.5);
   }
 
-  // ================= 恐怖谷文字处理 =================
-  (function distortText() {
-    const el = document.getElementById('spookyText');
-    const text = el.textContent;
-    el.innerHTML = '';
+  // ================= 满屏幕文字生成（恐怖谷版） =================
+  function createTextWall() {
+    const wall = document.getElementById('text-wall');
+    wall.innerHTML = '';
+    const W = window.innerWidth;
+    const H = window.innerHeight;
     
-    for (let i = 0; i < text.length; i++) {
-      const span = document.createElement('span');
-      span.textContent = text[i];
+    // 根据屏幕大小决定文字块数量，保证密布全屏
+    const count = Math.min(40, Math.max(15, Math.floor((W * H) / 25000)));
+    const text = "我看见你了";
+
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('div');
+      el.className = 'glitch-word';
       
-      // 极度的不规则形变，制造“文字恐怖谷”
-      const rot = (Math.random() - 0.5) * 25;          // 剧烈旋转 -12.5deg ~ 12.5deg
-      const xOff = (Math.random() - 0.5) * 20;         // 水平错位
-      const yOff = (Math.random() - 0.5) * 25;         // 垂直错位
-      const scaleX = 0.6 + Math.random() * 1.2;        // 横向极度拉伸或压扁 (0.6~1.8)
-      const scaleY = 0.7 + Math.random() * 1.5;        // 纵向极度拉伸或压扁 (0.7~2.2)
-      const skewX = (Math.random() - 0.5) * 15;        // 倾斜
+      // 随机位置，有时会重叠，增加压迫感
+      const x = (Math.random() * 90 - 10); // -10vw ~ 80vw
+      const y = (Math.random() * 90 - 10); // -10vh ~ 80vh
       
-      span.style.transform = `rotate(${rot}deg) translate(${xOff}px, ${yOff}px) scale(${scaleX}, ${scaleY}) skewX(${skewX}deg)`;
+      el.style.left = x + 'vw';
+      el.style.top = y + 'vh';
       
-      // 随机化每个字的痉挛动画延迟，让它们错开
-      span.style.animationDelay = (Math.random() * -2) + 's';
-      span.style.animationDuration = (0.4 + Math.random() * 0.8) + 's';
+      // 随机旋转和缩放，让每个文字块都有不同的扭曲感
+      const rotate = (Math.random() - 0.5) * 30;
+      const scale = 0.8 + Math.random() * 0.6;
+      el.style.transform = `rotate(${rotate}deg) scale(${scale})`;
       
-      el.appendChild(span);
+      // 延迟动画，防止所有文字同时呼吸
+      el.style.animationDelay = (Math.random() * -2) + 's, ' + (Math.random() * -3) + 's';
+      
+      // 生成内部的恐怖谷字符
+      for (let j = 0; j < text.length; j++) {
+        const span = document.createElement('span');
+        span.textContent = text[j];
+        
+        // 极端的单字变形：超级拉伸、压扁、倾斜
+        const rot = (Math.random() - 0.5) * 40;          // 剧烈旋转
+        const xOff = (Math.random() - 0.5) * 30;         // 水平错位
+        const yOff = (Math.random() - 0.5) * 40;         // 垂直错位
+        const scaleX = 0.5 + Math.random() * 1.8;        // 横向拉伸
+        const scaleY = 0.5 + Math.random() * 1.8;        // 纵向拉伸
+        const skewX = (Math.random() - 0.5) * 30;        // 剧烈倾斜
+        
+        span.style.transform = `rotate(${rot}deg) translate(${xOff}px, ${yOff}px) scale(${scaleX}, ${scaleY}) skewX(${skewX}deg)`;
+        span.style.animationDelay = (Math.random() * -2) + 's';
+        span.style.animationDuration = (0.3 + Math.random() * 0.5) + 's';
+        
+        el.appendChild(span);
+      }
+      
+      wall.appendChild(el);
     }
-  })();
+  }
 
   // ================= 背景幽灵眼 =================
   function createBgEyes() {
     const container = document.getElementById('bg-eyes');
     container.innerHTML = '';
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 8; i++) {
       const eye = document.createElement('div');
       eye.className = 'bg-eye';
       const size = 200 + Math.random() * 300;
@@ -311,31 +327,39 @@ zzzz
     }
   }
 
-  // ================= 互动小眼睛 =================
+  // ================= 互动眼睛生成（布满全屏） =================
   const eyesLayer = document.getElementById('eyes');
   const eyes = [];
 
   function createEyes() {
     eyes.forEach(o => clearTimeout(o.blinkTimer)); eyes.length = 0; eyesLayer.innerHTML = '';
     const W = window.innerWidth; const H = window.innerHeight;
-    const regions = [
-      { xMin: 3, xMax: 97, yMin: 2,  yMax: 18 }, { xMin: 3, xMax: 97, yMin: 82, yMax: 98 },
-      { xMin: 3, xMax: 14, yMin: 18, yMax: 82 }, { xMin: 86, xMax: 97, yMin: 18, yMax: 82 }
-    ];
-    const placed = []; const targetCount = Math.min(80, Math.max(30, Math.floor((W * H) / 8000)));
+    
+    // 全屏随机分布，数量更多
+    const placed = []; 
+    const targetCount = Math.min(150, Math.max(50, Math.floor((W * H) / 6000)));
 
     for (let i = 0; i < targetCount; i++) {
-      const region = regions[i % regions.length];
       let x, y, w, h, cx, cy, ok = false, tries = 0;
-      while (!ok && tries < 60) {
-        x = region.xMin + Math.random() * (region.xMax - region.xMin);
-        y = region.yMin + Math.random() * (region.yMax - region.yMin);
-        w = 30 + Math.random() * 45; h = w * 0.46;
+      
+      // 全屏随机位置
+      while (!ok && tries < 50) {
+        x = Math.random() * 100; // 0vw ~ 100vw
+        y = Math.random() * 100; // 0vh ~ 100vh
+        w = 25 + Math.random() * 35; // 眼睛稍微小一点，保证数量多
+        h = w * 0.46;
         cx = (x / 100) * W; cy = (y / 100) * H;
+        
         ok = true;
-        for (const p of placed) { if (Math.hypot(cx - p.cx, cy - p.cy) < (w + p.w) * 0.62) { ok = false; break; } }
+        // 防止重叠得太厉害，但允许轻微堆叠
+        for (const p of placed) { 
+          if (Math.hypot(cx - p.cx, cy - p.cy) < (w + p.w) * 0.4) { 
+            ok = false; break; 
+          } 
+        }
         tries++;
       }
+      
       if (!ok) continue;
       placed.push({ cx, cy, w });
 
@@ -400,6 +424,7 @@ zzzz
   // 初始化
   createBgEyes();
   createEyes();
+  createTextWall();
 
   setTimeout(() => {
     initAudio(); document.body.classList.add('flashing');
@@ -408,7 +433,14 @@ zzzz
   }, 1500);
 
   let resizeTimer;
-  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { createBgEyes(); createEyes(); }, 300); });
+  window.addEventListener('resize', () => { 
+    clearTimeout(resizeTimer); 
+    resizeTimer = setTimeout(() => { 
+      createBgEyes(); 
+      createEyes(); 
+      createTextWall(); 
+    }, 300); 
+  });
 </script>
 
 </body>
