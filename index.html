@@ -12,121 +12,161 @@ zzzz
   html, body { width:100%; height:100%; overflow:hidden; background:#ff0000; }
   body { font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Heiti SC", sans-serif; }
 
-  #eyes { position:fixed; inset:0; z-index:1; overflow:hidden; }
+  /* 眼睛容器，不阻挡点击穿透 */
+  #eyes { position:fixed; inset:0; z-index:1; overflow:hidden; pointer-events: none; }
 
-  /* 眼睛容器 */
-  .eye {
+  /* 眼睛外框：不规则多边形裁剪，自带内眼角，深邃且血红 */
+  .eye-wrapper {
     position:absolute;
-    pointer-events: none;
+    background: #fff;
+    /* 不规则眼眶：左侧尖锐内眼角，上下边缘扭曲 */
+    clip-path: polygon(
+      0% 50%, 10% 20%, 30% 8%, 60% 5%, 85% 15%, 
+      100% 40%, 90% 70%, 65% 92%, 35% 95%, 10% 80%
+    );
+    box-shadow: inset 0 0 15px rgba(180, 0, 0, 0.9), inset 0 0 5px rgba(255, 0, 0, 0.5);
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.9));
     opacity: 0;
     transform: scale(0);
     transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: auto; /* 恢复点击 */
+    cursor: crosshair;
+  }
+
+  .eye-wrapper.spawned {
+    opacity: 1;
+    transform: scale(1);
+    animation: eyeShake 0.15s linear infinite;
+  }
+
+  @keyframes eyeShake {
+    0% { transform: scale(1) translate(0, 0) rotate(0deg); }
+    25% { transform: scale(1) translate(1px, -1px) rotate(0.5deg); }
+    50% { transform: scale(1) translate(-1px, 1px) rotate(-0.5deg); }
+    75% { transform: scale(1) translate(1px, 1px) rotate(0deg); }
+    100% { transform: scale(1) translate(0, 0) rotate(0deg); }
+  }
+
+  /* 眼球（白色眼白） */
+  .eyeball {
+    position: absolute;
+    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
-  /* 眼睛形状：更真实的椭圆眼，带球面感和眼睑阴影 */
-  .eye-shape {
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle at center, #fff 30%, #d9d9d9 80%, #b3b3b3 100%);
-    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; /* 模拟真实眼型，上下不对称 */
-    box-shadow: 
-      inset 0 0 20px rgba(0, 0, 0, 0.8), /* 眼睑阴影 */
-      inset 0 0 5px rgba(255, 0, 0, 0.6), /* 红血丝边缘 */
-      0 0 10px rgba(0,0,0,0.8); 
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transform-origin: center center;
-    overflow: hidden;
-  }
-
-  /* 红血丝 */
-  .eye-shape::after {
+  /* 红血丝细节 */
+  .eyeball::after {
     content: "";
     position: absolute;
     inset: 0;
     background: 
-      radial-gradient(circle at 15% 30%, rgba(180, 0, 0, 0.6) 0%, transparent 30%),
-      radial-gradient(circle at 85% 70%, rgba(200, 0, 0, 0.5) 0%, transparent 35%);
+      radial-gradient(circle at 20% 30%, rgba(150, 0, 0, 0.4) 0%, transparent 20%),
+      radial-gradient(circle at 80% 70%, rgba(200, 0, 0, 0.3) 0%, transparent 25%),
+      radial-gradient(circle at 50% 50%, transparent 40%, rgba(100, 0, 0, 0.6) 100%);
     pointer-events: none;
   }
 
-  /* 黑眼珠（瞳孔） */
+  /* 眼珠（纯黑色） */
   .pupil {
     position: absolute;
     width: 38%;
-    height: 68%;
-    background: radial-gradient(circle at center, #000 60%, #1a1a1a 100%);
+    height: 65%;
+    background: #000;
     border-radius: 50%;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
     transition: transform 0.08s ease-out;
-    box-shadow: inset 0 0 5px rgba(0,0,0,1);
+    box-shadow: 0 0 8px #000;
   }
 
-  /* 眼睛出现 */
-  .eye.spawned {
-    opacity: 1;
-    transform: scale(1);
-    animation: shake 0.15s linear infinite;
+  /* 眼皮机制：上下眼皮，默认缩到边缘，眨眼时关闭 */
+  .upper-lid, .lower-lid {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    background: #000; /* 眼皮颜色，可与背景融合或纯黑 */
+    z-index: 5;
+    transform-origin: top;
+    transition: transform 0.1s ease;
   }
+  .lower-lid {
+    bottom: 0;
+    transform-origin: bottom;
+  }
+  .upper-lid { top: 0; }
+  
+  /* 默认睁开状态，只占一点点 */
+  .upper-lid { transform: scaleY(0.15); }
+  .lower-lid { transform: scaleY(0.15); }
 
-  @keyframes shake {
-    0% { transform: scale(1) translate(0, 0) rotate(0deg); }
-    25% { transform: scale(1) translate(1px, -1px) rotate(1deg); }
-    50% { transform: scale(1) translate(-1px, 1px) rotate(-1deg); }
-    75% { transform: scale(1) translate(1px, 1px) rotate(0.5deg); }
-    100% { transform: scale(1) translate(0, 0) rotate(0deg); }
-  }
+  /* 眨眼状态 */
+  .eye-wrapper.blinking .upper-lid { transform: scaleY(1); }
+  .eye-wrapper.blinking .lower-lid { transform: scaleY(1); }
 
-  /* 独立眨眼动画 */
-  .eye-shape.blinking {
-    animation: blinkAnim 0.2s ease-in-out;
-  }
-  @keyframes blinkAnim {
-    0%, 100% { transform: scaleY(1); }
-    50% { transform: scaleY(0.05); }
-  }
+  /* 向上看（睁大） */
+  .eye-wrapper.look-up .upper-lid { transform: scaleY(0.05); }
+  .eye-wrapper.look-up .lower-lid { transform: scaleY(0.05); }
 
-  .vignette {
+  /* 向下看（微眯） */
+  .eye-wrapper.look-down .upper-lid { transform: scaleY(0.35); }
+  .eye-wrapper.look-down .lower-lid { transform: scaleY(0.35); }
+
+
+  /* 文字样式：黑字加粗，蓝边，故障错乱效果 */
+  .text-wrap {
     position:fixed;
     inset:0;
-    z-index:5;
+    z-index:10;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:6vw;
     pointer-events:none;
-    background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,.6) 100%);
   }
 
-  /* 文字层 */
-  .text-layer {
-    position: fixed;
-    inset: 0;
-    z-index: 10;
-    pointer-events: none;
-    overflow: hidden;
+  .text {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2vw;
+    max-width: 1000px;
   }
 
-  /* 不规则的文字样式 */
-  .creepy-text {
-    position: absolute;
-    color: #000; /* 黑字 */
+  .text span {
+    display: inline-block;
+    color: #000;
     font-weight: 900;
     font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Heiti SC", sans-serif;
-    font-size: clamp(30px, 8vw, 80px);
-    letter-spacing: 0.1em;
-    white-space: nowrap;
-    /* 加蓝边 */
-    -webkit-text-stroke: 2px #0000ff; 
+    font-size: clamp(40px, 12vw, 100px);
+    /* 蓝边和发光 */
+    -webkit-text-stroke: 3px #00ffff;
     text-shadow: 
-      0 0 10px #0000ff,
-      0 0 20px #0000ff;
+      3px 3px 0 #0000ff, 
+      -3px -3px 0 #00ffff, 
+      0 0 15px #0000ff,
+      0 0 30px #0000ff;
+    /* 不规则变形 */
+    transform: rotate(var(--rot, 0deg)) skewX(var(--skew, 0deg)) translateY(var(--dy, 0px));
+    animation: textGlitch 0.2s infinite alternate;
   }
 
-  /* 闪烁遮罩 */
+  /* 每个字的随机动态 */
+  .text span:nth-child(1) { --rot: -5deg; --skew: 10deg; --dy: -5px; animation-delay: 0.1s; }
+  .text span:nth-child(2) { --rot: 8deg; --skew: -15deg; --dy: 10px; animation-delay: 0.3s; }
+  .text span:nth-child(3) { --rot: -3deg; --skew: 5deg; --dy: -8px; animation-delay: 0.5s; }
+  .text span:nth-child(4) { --rot: 6deg; --skew: -8deg; --dy: 5px; animation-delay: 0.2s; }
+  .text span:nth-child(5) { --rot: -8deg; --skew: 12deg; --dy: -10px; animation-delay: 0.4s; }
+
+  @keyframes textGlitch {
+    0% { opacity: 0.9; transform: rotate(var(--rot)) skewX(var(--skew)) translateY(var(--dy)) scale(1); }
+    100% { opacity: 1; transform: rotate(calc(var(--rot) * -1)) skewX(calc(var(--skew) * -1)) translateY(calc(var(--dy) * -1)) scale(1.05); }
+  }
+
+  /* 闪烁遮罩层 */
   #flash-overlay {
     position: fixed;
     inset: 0;
@@ -137,20 +177,16 @@ zzzz
   }
 
   .flashing #flash-overlay {
-    animation: flashInfinite 0.15s infinite;
+    animation: flashInfinite 0.12s infinite;
   }
 
   @keyframes flashInfinite {
     0%, 100% { opacity: 0; }
-    50% { opacity: 0.5; }
+    50% { opacity: 0.6; }
   }
 
-  .flashing .creepy-text {
-    animation: textFlash 0.15s infinite;
-  }
-  @keyframes textFlash {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+  .flashing .text span {
+    animation-duration: 0.08s; /* 闪烁时文字加速抖动 */
   }
 </style>
 </head>
@@ -158,15 +194,20 @@ zzzz
 
 <div id="flash-overlay"></div>
 <div id="eyes"></div>
-<div class="vignette"></div>
+<div class="vignette" style="position:fixed;inset:0;z-index:5;pointer-events:none;background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,.6) 100%);"></div>
 
-<div class="text-layer" id="textLayer"></div>
+<div class="text-wrap">
+  <div class="text">
+    <span>我</span><span>看</span><span>见</span><span>你</span><span>了</span>
+  </div>
+</div>
 
 <script>
-  // ================= 音频系统（恢复为突出人声和眼珠声的版本） =================
+  // ================= 音频系统 =================
   let audioCtx = null;
   let isAudioInitialized = false;
   let flickerSoundInterval = null;
+  let reverseSoundInterval = null;
 
   function initAudio() {
     if (isAudioInitialized) return;
@@ -175,96 +216,134 @@ zzzz
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     audioCtx = new AudioContext();
 
-    // 1. 背景不适音：双频拍频（50Hz + 53Hz） + 高频耳鸣
-    const lowOsc1 = audioCtx.createOscillator();
-    const lowOsc2 = audioCtx.createOscillator();
+    // 1. 低频环境轰鸣
+    const lowOsc = audioCtx.createOscillator();
     const lowGain = audioCtx.createGain();
-    lowOsc1.type = 'sine'; lowOsc1.frequency.value = 50;
-    lowOsc2.type = 'sine'; lowOsc2.frequency.value = 53;
-    lowGain.gain.value = 0.08;
-    lowOsc1.connect(lowGain); lowOsc2.connect(lowGain); lowGain.connect(audioCtx.destination);
-    lowOsc1.start(); lowOsc2.start();
+    const lfo = audioCtx.createOscillator();
+    const lfoGain = audioCtx.createGain();
+    lowOsc.type = 'sawtooth';
+    lowOsc.frequency.value = 40;
+    lfo.frequency.value = 0.4;
+    lfoGain.gain.value = 0.5;
+    lfo.connect(lfoGain);
+    lfoGain.connect(lowGain.gain);
+    lowGain.gain.value = 0.15;
+    lowOsc.connect(lowGain);
+    lowGain.connect(audioCtx.destination);
+    lowOsc.start();
+    lfo.start();
 
-    const tinnitusOsc = audioCtx.createOscillator();
-    const tinnitusGain = audioCtx.createGain();
-    tinnitusOsc.type = 'sine'; tinnitusOsc.frequency.value = 8000;
-    tinnitusGain.gain.value = 0.015;
-    tinnitusOsc.connect(tinnitusGain); tinnitusGain.connect(audioCtx.destination);
-    tinnitusOsc.start();
-
-    // 2. 突出人声：模糊低语
-    const whisperBufferSize = audioCtx.sampleRate * 4;
+    // 2. 低声细语
+    const whisperBufferSize = audioCtx.sampleRate * 2;
     const whisperBuffer = audioCtx.createBuffer(1, whisperBufferSize, audioCtx.sampleRate);
     const whisperData = whisperBuffer.getChannelData(0);
     for (let i = 0; i < whisperBufferSize; i++) whisperData[i] = Math.random() * 2 - 1;
     const whisperSource = audioCtx.createBufferSource();
-    whisperSource.buffer = whisperBuffer; whisperSource.loop = true;
-    
+    whisperSource.buffer = whisperBuffer;
+    whisperSource.loop = true;
     const whisperFilter = audioCtx.createBiquadFilter();
-    whisperFilter.type = 'bandpass'; whisperFilter.frequency.value = 1200; whisperFilter.Q.value = 8;
-    
+    whisperFilter.type = 'bandpass';
+    whisperFilter.frequency.value = 1000;
+    whisperFilter.Q.value = 2;
     const whisperLfo = audioCtx.createOscillator();
     const whisperLfoGain = audioCtx.createGain();
-    whisperLfo.frequency.value = 5; whisperLfoGain.gain.value = 800;
-    whisperLfo.connect(whisperLfoGain); whisperLfoGain.connect(whisperFilter.frequency);
-    
+    whisperLfo.frequency.value = 0.3;
+    whisperLfoGain.gain.value = 500;
+    whisperLfo.connect(whisperLfoGain);
+    whisperLfoGain.connect(whisperFilter.frequency);
     const whisperGain = audioCtx.createGain();
-    whisperGain.gain.value = 0.25; // 突出人声
-    
-    whisperSource.connect(whisperFilter); whisperFilter.connect(whisperGain); whisperGain.connect(audioCtx.destination);
-    whisperSource.start(); whisperLfo.start();
+    whisperGain.gain.value = 0.04;
+    whisperSource.connect(whisperFilter);
+    whisperFilter.connect(whisperGain);
+    whisperGain.connect(audioCtx.destination);
+    whisperSource.start();
+    whisperLfo.start();
 
-    flickerSoundInterval = setInterval(playFlickerSound, 150);
+    // 3. 闪烁电流声
+    flickerSoundInterval = setInterval(playFlickerSound, 130);
+    
+    // 4. 随机混乱倒放声
+    reverseSoundInterval = setInterval(() => {
+      if (Math.random() > 0.6) playReverseSound();
+    }, 3000);
   }
 
   function playFlickerSound() {
     if (!audioCtx || !document.body.classList.contains('flashing')) return;
-    if (Math.random() < 0.4) return; 
+    if (Math.random() < 0.3) return; 
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'square';
     osc.frequency.setValueAtTime(800 + Math.random() * 800, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.05);
   }
 
-  // 放大眼珠声音：眨眼声
+  function playReverseSound() {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(1500, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.4);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(2000, audioCtx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.4);
+    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.4);
+  }
+
+  // 眨眼音效（短促粘稠声）
   function playBlinkSound() {
     if (!audioCtx) return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.06);
-    gain.gain.setValueAtTime(0.4, audioCtx.currentTime); // 音量放大
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.06);
+    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.05);
+    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.05);
   }
 
-  // 放大眼珠声音：湿润粘稠滑动声
+  // 手指滑动的粘稠声
   let lastStickySoundTime = 0;
   function playStickySound() {
     if (!audioCtx) return;
     const now = Date.now();
     if (now - lastStickySoundTime < 60) return;
     lastStickySoundTime = now;
-    
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     const filter = audioCtx.createBiquadFilter();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(200 + Math.random() * 150, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.12);
-    filter.type = 'lowpass'; filter.frequency.value = 600;
-    gain.gain.setValueAtTime(0.35, audioCtx.currentTime); // 音量放大
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-    osc.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+    osc.frequency.setValueAtTime(150 + Math.random() * 100, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+    filter.type = 'lowpass';
+    filter.frequency.value = 400;
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.1);
   }
 
+  // 惊吓爆发声
   function playJumpscare() {
     if (!audioCtx) return;
     const osc = audioCtx.createOscillator();
@@ -272,117 +351,126 @@ zzzz
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(300, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.5);
-    gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.5);
   }
 
   // ================= 视觉与交互系统 =================
   const eyesLayer = document.getElementById('eyes');
+  let allEyes = [];
 
-  // 1. 生成不规则分布的文字
-  function createTexts() {
-    const textLayer = document.getElementById('textLayer');
-    textLayer.innerHTML = '';
+  // 眨眼动作
+  function blinkEye(eyeEl, playSound = true) {
+    if (eyeEl.classList.contains('blinking')) return;
+    eyeEl.classList.add('blinking');
+    if (playSound) playBlinkSound();
     
-    for (let i = 0; i < 6; i++) {
-      const el = document.createElement('div');
-      el.className = 'creepy-text';
-      el.innerText = '我看见你了';
-      
-      // 随机位置、旋转、大小
-      el.style.left = (Math.random() * 80 + 10) + '%';
-      el.style.top = (Math.random() * 80 + 10) + '%';
-      el.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 40 - 20}deg) scale(${Math.random() * 0.6 + 0.6})`;
-      
-      textLayer.appendChild(el);
-    }
+    setTimeout(() => {
+      eyeEl.classList.remove('blinking');
+    }, 120); // 120ms 完成一次眨眼
   }
 
-  // 2. 生成眼睛
   function createEyes() {
     eyesLayer.innerHTML = '';
+    allEyes = [];
+
     const screenW = window.innerWidth;
     const screenH = window.innerHeight;
     
-    const gridSize = 70; // 略微扩大间距，防止眼睛挤在一起
-    const cols = Math.floor(screenW / gridSize);
-    const rows = Math.floor(screenH / gridSize);
-    const totalCells = cols * rows;
-    
-    const eyeCount = Math.floor(totalCells * 0.35); 
-    const placedEyes = [];
-    
-    let attempts = 0;
-    while (placedEyes.length < eyeCount && attempts < 500) {
-      attempts++;
-      const col = Math.floor(Math.random() * cols);
-      const row = Math.floor(Math.random() * rows);
-      
-      const cx = (col + 0.5) * gridSize + (Math.random() * 20 - 10);
-      const cy = (row + 0.5) * gridSize + (Math.random() * 20 - 10);
-      
-      const w = Math.random() * 60 + 40; 
-      const h = w * 0.45;
+    // 生成更多眼睛（约 40-60 只，视屏幕大小而定）
+    const eyeCount = Math.min(60, Math.max(20, Math.floor(screenW * screenH / 15000))); 
 
-      let tooClose = false;
-      for (let eye of placedEyes) {
-        const dist = Math.hypot(cx - eye.cx, cy - eye.cy);
-        if (dist < (w + eye.w) * 0.8) { 
-          tooClose = true;
-          break;
+    for (let i = 0; i < eyeCount; i++) {
+      // 随机分布在四周区域，避开中心文字
+      let x, y, w;
+      let validPlacement = false;
+      let attempts = 0;
+
+      while (!validPlacement && attempts < 50) {
+        // 随机位置：屏幕边缘 20% 范围内，避开中间
+        const edge = Math.floor(Math.random() * 4); // 0上 1下 2左 3右
+        if (edge === 0) { x = Math.random() * 100; y = Math.random() * 20; }
+        else if (edge === 1) { x = Math.random() * 100; y = 80 + Math.random() * 20; }
+        else if (edge === 2) { x = Math.random() * 20; y = 20 + Math.random() * 60; }
+        else { x = 80 + Math.random() * 20; y = 20 + Math.random() * 60; }
+
+        w = Math.random() * 80 + 50; // 眼睛宽 50~130px
+
+        // 简单防重叠
+        let tooClose = false;
+        for (let e of allEyes) {
+          const dist = Math.hypot(x - e.x, y - e.y);
+          if (dist < (w / screenW * 100) * 1.5) {
+            tooClose = true;
+            break;
+          }
         }
+        if (!tooClose) validPlacement = true;
+        attempts++;
       }
 
-      if (!tooClose) {
-        placedEyes.push({ cx, cy, w });
+      if (!validPlacement) continue;
 
-        const el = document.createElement('div');
-        el.className = 'eye';
-        
-        const eyeShape = document.createElement('div');
-        eyeShape.className = 'eye-shape';
-        
-        const pupil = document.createElement('div');
-        pupil.className = 'pupil';
-        
-        eyeShape.appendChild(pupil);
-        el.appendChild(eyeShape);
+      const wrapper = document.createElement('div');
+      wrapper.className = 'eye-wrapper';
+      wrapper.style.width = w + 'px';
+      wrapper.style.height = (w * 0.45) + 'px';
+      wrapper.style.left = x + 'vw';
+      wrapper.style.top = y + 'vh';
+      
+      // 鼠标和触摸交互绑定
+      wrapper.addEventListener('click', (e) => {
+        e.stopPropagation();
+        blinkEye(wrapper);
+      });
+      wrapper.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
+        blinkEye(wrapper);
+      }, { passive: true });
 
-        el.style.width = w + 'px';
-        el.style.height = h + 'px';
-        el.style.left = cx + 'px';
-        el.style.top = cy + 'px';
+      const eyeball = document.createElement('div');
+      eyeball.className = 'eyeball';
+      
+      const pupil = document.createElement('div');
+      pupil.className = 'pupil';
+      eyeball.appendChild(pupil);
 
-        eyesLayer.appendChild(el);
-        
-        // 每只眼睛独立开启随机眨眼机制
-        scheduleBlink(el, eyeShape);
-      }
+      const upperLid = document.createElement('div');
+      upperLid.className = 'upper-lid';
+      const lowerLid = document.createElement('div');
+      lowerLid.className = 'lower-lid';
+
+      wrapper.appendChild(eyeball);
+      wrapper.appendChild(upperLid);
+      wrapper.appendChild(lowerLid);
+
+      wrapper.dataset.cx = (x / 100) * screenW;
+      wrapper.dataset.cy = (y / 100) * screenH;
+      wrapper.dataset.w = w;
+
+      eyesLayer.appendChild(wrapper);
+      
+      allEyes.push({
+        el: wrapper,
+        pupil: pupil,
+        upperLid: upperLid,
+        lowerLid: lowerLid,
+        x: x, y: y, w: w,
+        cx: (x / 100) * screenW,
+        cy: (y / 100) * screenH
+      });
     }
   }
 
-  // 独立的随机眨眼机制（防止同时眨眼）
-  function scheduleBlink(eyeEl, shapeEl) {
-    const delay = Math.random() * 4000 + 1500; // 1.5秒到5.5秒之间随机
-    setTimeout(() => {
-      if (shapeEl && !shapeEl.classList.contains('blinking')) {
-        shapeEl.classList.add('blinking');
-        // 只有离得近的眼睛被点击才播放声音，或者独立眨眼时极低概率播放，这里让独立眨眼不发声，仅点击发声
-        setTimeout(() => {
-          shapeEl.classList.remove('blinking');
-        }, 200);
-      }
-      scheduleBlink(eyeEl, shapeEl); // 递归调用，继续下一次随机眨眼
-    }, delay);
-  }
-
-  // 3. 滑动交互（眼球追踪与眼皮缩放）
+  // 全局鼠标/触摸跟踪
   function handleMove(e) {
     initAudio();
+
     let clientX, clientY;
-    
     if (e.touches && e.touches.length > 0) {
       clientX = e.touches[0].clientX;
       clientY = e.touches[0].clientY;
@@ -394,132 +482,79 @@ zzzz
       clientY = e.clientY;
     }
 
-    const eyes = document.querySelectorAll('.eye');
-    eyes.forEach(eye => {
-      const rect = eye.getBoundingClientRect();
-      const eyeX = rect.left + rect.width / 2;
-      const eyeY = rect.top + rect.height / 2;
-      
+    allEyes.forEach(eye => {
+      const eyeX = eye.cx;
+      const eyeY = eye.cy;
       const angle = Math.atan2(clientY - eyeY, clientX - eyeX);
-      const eyeWidth = parseFloat(eye.style.width);
       
-      const maxShift = eyeWidth * 0.2; 
+      const maxShift = eye.w * 0.15; // 眼珠最大偏移量
       const dx = Math.cos(angle) * maxShift;
       const dy = Math.sin(angle) * maxShift;
       
-      let pupilScale = 1;
-      let eyelidScale = 1;
-      const normalizedDy = dy / eyeWidth; 
-      
-      if (normalizedDy < 0) {
-        // 向上看：瞳孔放大，眼皮撑大
-        pupilScale = 1 + Math.abs(normalizedDy) * 1.8;
-        eyelidScale = 1 + Math.abs(normalizedDy) * 0.3; 
+      // 移动瞳孔
+      eye.pupil.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+
+      // 动态调整眼皮（上下看）
+      if (dy < -maxShift * 0.5) {
+        // 视线向上，眼皮睁开
+        eye.upperLid.style.transform = 'scaleY(0.05)';
+        eye.lowerLid.style.transform = 'scaleY(0.05)';
+      } else if (dy > maxShift * 0.5) {
+        // 视线向下，眼皮微闭
+        eye.upperLid.style.transform = 'scaleY(0.4)';
+        eye.lowerLid.style.transform = 'scaleY(0.4)';
       } else {
-        // 向下看：瞳孔缩小，眼皮眯起
-        pupilScale = 1 - normalizedDy * 1.5;
-        eyelidScale = 1 - normalizedDy * 0.3; 
-      }
-      
-      pupilScale = Math.min(1.4, Math.max(0.7, pupilScale));
-      eyelidScale = Math.min(1.3, Math.max(0.7, eyelidScale));
-      
-      const eyeShape = eye.querySelector('.eye-shape');
-      const pupil = eye.querySelector('.pupil');
-      
-      if (pupil) {
-        pupil.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(${pupilScale})`;
-      }
-      
-      // 如果当前不在眨眼状态，才应用缩放
-      if (eyeShape && !eyeShape.classList.contains('blinking')) {
-        eyeShape.style.transform = `scaleY(${eyelidScale})`;
+        // 平视，默认
+        eye.upperLid.style.transform = 'scaleY(0.15)';
+        eye.lowerLid.style.transform = 'scaleY(0.15)';
       }
     });
 
     playStickySound();
   }
 
-  // 4. 点击交互：只触发离手指最近的那几只眼睛眨眼
-  let lastClickTime = 0;
-  function handleClick(e) {
-    const now = Date.now();
-    if (now - lastClickTime < 200) return; // 防止移动端 touchstart 和 click 双重触发
-    lastClickTime = now;
-
-    initAudio();
-    
-    let clientX, clientY;
-    if (e.touches && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else if (e.changedTouches && e.changedTouches.length > 0) {
-      clientX = e.changedTouches[0].clientX;
-      clientY = e.changedTouches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-    
-    let blinkedCount = 0;
-    const eyes = document.querySelectorAll('.eye');
-    
-    // 打乱数组顺序，让触发更随机
-    const shuffledEyes = Array.from(eyes).sort(() => Math.random() - 0.5);
-    
-    shuffledEyes.forEach(eye => {
-      const rect = eye.getBoundingClientRect();
-      const eyeX = rect.left + rect.width / 2;
-      const eyeY = rect.top + rect.height / 2;
-      
-      const dist = Math.hypot(clientX - eyeX, clientY - eyeY);
-      // 只触发距离手指 200px 内的眼睛，且限制每次最多触发 5 只，绝不触发全屏
-      if (dist < 200 && blinkedCount < 5) {
-        blinkedCount++;
-        const eyeShape = eye.querySelector('.eye-shape');
-        if (eyeShape && !eyeShape.classList.contains('blinking')) {
-          eyeShape.classList.add('blinking');
-          setTimeout(() => {
-            eyeShape.classList.remove('blinking');
-            eyeShape.style.transform = ''; 
-          }, 200);
-        }
+  // 随机错落眨眼（防止同时眨眼）
+  setInterval(() => {
+    if (allEyes.length === 0) return;
+    // 每次随机挑 1 到 2 只眼睛眨眼
+    const count = Math.floor(Math.random() * 2) + 1;
+    for (let i = 0; i < count; i++) {
+      const randomEye = allEyes[Math.floor(Math.random() * allEyes.length)];
+      // 确保不打断正在眨眼的眼睛
+      if (!randomEye.el.classList.contains('blinking')) {
+        blinkEye(randomEye.el, false); // 自动眨眼不播声音，避免嘈杂
       }
-    });
-
-    // 如果有眼睛被触发，就播放眨眼声
-    if (blinkedCount > 0) {
-      playBlinkSound();
     }
-  }
+  }, 1500); // 每 1.5 秒触发一次随机眨眼
 
   document.addEventListener('mousemove', handleMove);
   document.addEventListener('touchmove', handleMove, { passive: false });
   document.addEventListener('touchstart', handleMove, { passive: false });
-  document.addEventListener('click', handleClick);
-  document.addEventListener('touchstart', handleClick, { passive: false });
 
-  // 初始化
-  createTexts();
   createEyes();
 
-  // 1.5秒后：屏幕疯狂闪烁，眼睛出现，伴随惊吓音效
+  // 1.5秒后：开始疯狂闪烁，眼睛出现，伴随惊吓音效
   setTimeout(() => {
     initAudio(); 
     document.body.classList.add('flashing');
-    document.querySelectorAll('.eye').forEach(eye => {
-      eye.classList.add('spawned');
+    
+    allEyes.forEach(eye => {
+      eye.el.classList.add('spawned');
     });
+
     playJumpscare();
+    
+    // 让眼睛交错出现
+    allEyes.forEach((eye, index) => {
+      eye.el.style.transitionDelay = (index * 0.02) + 's';
+    });
+    
   }, 1500);
 
   let timer;
   window.addEventListener('resize', () => {
     clearTimeout(timer);
-    timer = setTimeout(() => {
-      createTexts();
-      createEyes();
-    }, 300);
+    timer = setTimeout(createEyes, 300);
   });
 </script>
 
