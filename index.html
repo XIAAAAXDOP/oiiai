@@ -9,171 +9,165 @@ zzzz
 <title>你找到了这里</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  html, body { width:100%; height:100%; overflow:hidden; background:#ff0000; }
-  body { font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Heiti SC", sans-serif; }
+  html, body { width:100%; height:100%; overflow:hidden; background:#000; font-family: "Microsoft YaHei","PingFang SC","Noto Sans SC","Heiti SC",sans-serif; }
 
-  #eyes { position:fixed; inset:0; z-index:1; overflow:hidden; }
+  /* 故障红黑背景层 */
+  #glitch-bg {
+    position: fixed; inset: 0; z-index: 1;
+    background: #ff0000;
+    animation: bgFlash 0.15s infinite alternate;
+  }
+  @keyframes bgFlash {
+    0% { background: #000; }
+    100% { background: #ff0000; }
+  }
 
-  /* 外层眼睛容器：负责定位、出现的缩放、微弱颤抖、点击热区 */
+  /* 扫描线覆盖层 */
+  #scanlines {
+    position: fixed; inset: 0; z-index: 2; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.6) 0px, rgba(0,0,0,0.6) 2px, transparent 2px, transparent 4px);
+    opacity: 0.8;
+  }
+
+  /* 背景巨大幽灵眼层 */
+  #bg-eyes { position: fixed; inset: 0; z-index: 3; overflow: hidden; pointer-events: none; }
+  .bg-eye {
+    position: absolute;
+    background: radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.8) 20%, rgba(0,0,0,0) 70%);
+    border-radius: 50%;
+    filter: blur(8px);
+    animation: bgEyeDrift 15s infinite linear alternate;
+  }
+  .bg-eye::after {
+    content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 40%; height: 60%; background: #000; border-radius: 50%;
+  }
+  @keyframes bgEyeDrift {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(20px, 20px) scale(1.1); }
+  }
+
+  /* 互动眼睛层 */
+  #eyes { position: fixed; inset: 0; z-index: 4; overflow: hidden; }
   .eye {
-    position:absolute;
-    opacity:0;
-    transform: scale(0);
-    pointer-events: auto;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
+    position: absolute; opacity: 0; transform: scale(0); pointer-events: auto;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
     transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
-  .eye.spawned {
-    opacity: 1;
-    transform: scale(1);
-    animation: shake 0.18s linear infinite;
-  }
-
-  /* 极细微颤抖，模拟生物的不安 */
-  @keyframes shake {
-    0%,100% { transform: scale(1) translate(0, 0) rotate(0deg); }
-    25% { transform: scale(1) translate(0.5px, -0.5px) rotate(0.4deg); }
-    50% { transform: scale(1) translate(-0.5px, 0.5px) rotate(-0.4deg); }
-    75% { transform: scale(1) translate(0.5px, 0.5px) rotate(0.2deg); }
-  }
-
-  /* 眼睛形状：不规则的眼眶轮廓，通过 scaleY 模拟睁眼/闭眼 */
+  .eye.spawned { opacity: 1; transform: scale(1); }
   .eye-shape {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    clip-path: polygon(
-      0% 50%,
-      8% 22%,
-      25% 8%,
-      50% 2%,
-      75% 8%,
-      92% 22%,
-      100% 50%,
-      92% 78%,
-      75% 92%,
-      50% 98%,
-      25% 92%,
-      8% 78%
-    );
-    background: radial-gradient(ellipse at 50% 50%, #ffffff 55%, #f2eaea 100%);
-    overflow: hidden;
-    transform: scaleY(1);
-    transition: transform 0.15s ease-out;
+    position: relative; width: 100%; height: 100%;
+    clip-path: polygon(0% 50%, 8% 22%, 25% 8%, 50% 2%, 75% 8%, 92% 22%, 100% 50%, 92% 78%, 75% 92%, 50% 98%, 25% 92%, 8% 78%);
+    background: radial-gradient(ellipse at 50% 50%, #fff 60%, #ddd 100%);
+    overflow: hidden; transform: scaleY(1); transition: transform 0.15s ease-out;
   }
-
-  /* 眼角充血细节 */
   .eye-shape::after {
-    content:"";
-    position:absolute;
-    inset:0;
-    background:
-      radial-gradient(ellipse at 12% 50%, rgba(170,0,0,0.30) 0%, transparent 38%),
-      radial-gradient(ellipse at 88% 50%, rgba(170,0,0,0.18) 0%, transparent 32%);
-    pointer-events:none;
+    content:""; position:absolute; inset:0;
+    background: radial-gradient(ellipse at 12% 50%, rgba(170,0,0,0.4) 0%, transparent 40%),
+                radial-gradient(ellipse at 88% 50%, rgba(170,0,0,0.2) 0%, transparent 35%);
   }
-
-  /* 虹膜与瞳孔 */
   .iris {
-    position: absolute;
-    width: 34%;
-    aspect-ratio: 1 / 1;
-    left: 50%;
-    top: 50%;
-    border-radius: 50%;
-    background: radial-gradient(circle at 45% 45%, #0a0a0a 0%, #000 55%, #1a1a1a 100%);
-    transform: translate(-50%, -50%);
-    transition: transform 0.08s ease-out;
-    box-shadow: 0 0 4px rgba(0,0,0,0.9);
+    position: absolute; width: 38%; aspect-ratio: 1/1; left: 50%; top: 50%;
+    border-radius: 50%; background: radial-gradient(circle at 45% 45%, #0a0a0a 0%, #000 60%, #1a1a1a 100%);
+    transform: translate(-50%, -50%); transition: transform 0.08s ease-out;
   }
-  /* 瞳孔（纯黑，略小于虹膜） */
   .iris::after {
-    content:"";
-    position:absolute;
-    width: 48%;
-    height: 48%;
-    left: 50%;
-    top: 50%;
-    border-radius: 50%;
-    background: #000;
-    transform: translate(-50%, -50%);
+    content:""; position:absolute; width: 45%; height: 45%; left: 50%; top: 50%;
+    border-radius: 50%; background: #000; transform: translate(-50%, -50%);
   }
 
-  .vignette {
-    position:fixed;
-    inset:0;
-    z-index:5;
-    pointer-events:none;
-    background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,.62) 100%);
-  }
-
-  /* 文字：黑色加粗黑体 + 蓝色描边 */
+  /* 文字故障层 */
   .text-wrap {
-    position:fixed;
-    inset:0;
-    z-index:10;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:6vw;
-    pointer-events:none;
+    position: fixed; inset: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    padding: 6vw; pointer-events: none;
+  }
+  .glitch-text {
+    position: relative;
+    color: #000; /* 黑字 */
+    font-weight: 900;
+    font-size: clamp(50px, 16vw, 160px);
+    letter-spacing: 0.05em;
+    /* 蓝色描边与色差 */
+    text-shadow: 4px 0 0 #0033ff, -4px 0 0 #00ffff, 0 0 20px rgba(0,51,255,0.8);
+    animation: textGlitch 0.2s infinite alternate;
+  }
+  /* 制造重叠与切片撕裂感 */
+  .glitch-text::before, .glitch-text::after {
+    content: "我看见你了";
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: transparent; overflow: hidden;
+  }
+  .glitch-text::before {
+    left: 3px; text-shadow: -3px 0 #ff00ff; color: #000;
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    animation: glitchSlice 1.5s infinite linear alternate-reverse;
+  }
+  .glitch-text::after {
+    left: -3px; text-shadow: 3px 0 #00ffff; color: #000;
+    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    animation: glitchSlice 2s infinite linear alternate-reverse;
   }
 
-  .text {
-    max-width:1000px;
-    color:#000;
-    font-weight:900;
-    font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Heiti SC", sans-serif;
-    font-size:clamp(44px, 12vw, 120px);
-    line-height:1.15;
-    text-align:center;
-    letter-spacing:0.02em;
-    text-shadow:
-      3px 0 0 #0033ff,
-      -3px 0 0 #0033ff,
-      0 3px 0 #0033ff,
-      0 -3px 0 #0033ff,
-      3px 3px 0 #0033ff,
-      -3px -3px 0 #0033ff,
-      3px -3px 0 #0033ff,
-      -3px 3px 0 #0033ff;
-  }
-  .text span {
+  /* 文字不规则扭曲（消除僵硬感） */
+  .glitch-text span {
     display: inline-block;
+    animation: textWarp 3s infinite alternate ease-in-out;
+  }
+  @keyframes textWarp {
+    0% { transform: rotate(-3deg) translateY(4px) scale(1.05); }
+    100% { transform: rotate(3deg) translateY(-4px) scale(0.95); }
   }
 
+  @keyframes textGlitch {
+    0% { transform: skewX(0deg); }
+    20% { transform: skewX(-10deg); }
+    40% { transform: skewX(5deg); }
+    60% { transform: skewX(-5deg); }
+    100% { transform: skewX(0deg); }
+  }
+  @keyframes glitchSlice {
+    0% { transform: translate(0); clip-path: polygon(0 0, 100% 0, 100% 15%, 0 15%); }
+    20% { transform: translate(-5px, 2px); clip-path: polygon(0 20%, 100% 20%, 100% 35%, 0 35%); }
+    40% { transform: translate(5px, -2px); clip-path: polygon(0 40%, 100% 40%, 100% 55%, 0 55%); }
+    60% { transform: translate(-5px, 4px); clip-path: polygon(0 60%, 100% 60%, 100% 75%, 0 75%); }
+    80% { transform: translate(5px, -4px); clip-path: polygon(0 80%, 100% 80%, 100% 95%, 0 95%); }
+    100% { transform: translate(0); clip-path: polygon(0 10%, 100% 10%, 100% 30%, 0 30%); }
+  }
+
+  /* 暗角 */
+  .vignette {
+    position: fixed; inset: 0; z-index: 15; pointer-events: none;
+    background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.85) 100%);
+  }
+
+  /* 疯狂闪烁遮罩 */
   #flash-overlay {
-    position: fixed;
-    inset: 0;
-    background: #000;
-    opacity: 0;
-    pointer-events: none;
-    z-index: 100;
+    position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 100;
   }
-
-  .flashing #flash-overlay {
-    animation: flashInfinite 0.12s infinite;
-  }
-
+  .flashing #flash-overlay { animation: flashInfinite 0.08s infinite; }
   @keyframes flashInfinite {
     0%, 100% { opacity: 0; }
-    50% { opacity: 0.55; }
+    50% { opacity: 0.8; } /* 极强烈的闪烁 */
   }
 </style>
 </head>
 <body>
 
-<div id="flash-overlay"></div>
+<div id="glitch-bg"></div>
+<div id="scanlines"></div>
+<div id="bg-eyes"></div>
 <div id="eyes"></div>
 <div class="vignette"></div>
 
 <div class="text-wrap">
-  <div class="text" id="spookyText">我看见你了</div>
+  <div class="glitch-text" id="spookyText">我看见你了</div>
 </div>
 
+<div id="flash-overlay"></div>
+
 <script>
-  // ================= 音频系统 =================
+  // ================= 音频系统 (保留全部) =================
   let audioCtx = null;
   let isAudioInitialized = false;
   let flickerSoundInterval = null;
@@ -182,309 +176,176 @@ zzzz
   function initAudio() {
     if (isAudioInitialized) return;
     isAudioInitialized = true;
-
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     audioCtx = new AudioContext();
 
-    // 1. 低频环境轰鸣
+    // 1. 低频轰鸣
     const lowOsc = audioCtx.createOscillator();
     const lowGain = audioCtx.createGain();
     const lfo = audioCtx.createOscillator();
     const lfoGain = audioCtx.createGain();
-    lowOsc.type = 'sawtooth';
-    lowOsc.frequency.value = 40;
-    lfo.frequency.value = 0.4;
-    lfoGain.gain.value = 0.5;
-    lfo.connect(lfoGain);
-    lfoGain.connect(lowGain.gain);
+    lowOsc.type = 'sawtooth'; lowOsc.frequency.value = 35;
+    lfo.frequency.value = 0.4; lfoGain.gain.value = 0.5;
+    lfo.connect(lfoGain); lfoGain.connect(lowGain.gain);
     lowGain.gain.value = 0.15;
-    lowOsc.connect(lowGain);
-    lowGain.connect(audioCtx.destination);
-    lowOsc.start();
-    lfo.start();
+    lowOsc.connect(lowGain); lowGain.connect(audioCtx.destination);
+    lowOsc.start(); lfo.start();
 
-    // 2. 模糊的低声细语
+    // 2. 模糊细语
     const whisperBufferSize = audioCtx.sampleRate * 2;
     const whisperBuffer = audioCtx.createBuffer(1, whisperBufferSize, audioCtx.sampleRate);
     const whisperData = whisperBuffer.getChannelData(0);
-    for (let i = 0; i < whisperBufferSize; i++) {
-      whisperData[i] = Math.random() * 2 - 1;
-    }
-    const whisperSource = audioCtx.createBufferSource();
-    whisperSource.buffer = whisperBuffer;
-    whisperSource.loop = true;
-    const whisperFilter = audioCtx.createBiquadFilter();
-    whisperFilter.type = 'bandpass';
-    whisperFilter.frequency.value = 1000;
-    whisperFilter.Q.value = 2;
-    const whisperLfo = audioCtx.createOscillator();
-    const whisperLfoGain = audioCtx.createGain();
-    whisperLfo.frequency.value = 0.3;
-    whisperLfoGain.gain.value = 500;
-    whisperLfo.connect(whisperLfoGain);
-    whisperLfoGain.connect(whisperFilter.frequency);
-    const whisperGain = audioCtx.createGain();
-    whisperGain.gain.value = 0.04;
-    whisperSource.connect(whisperFilter);
-    whisperFilter.connect(whisperGain);
-    whisperGain.connect(audioCtx.destination);
-    whisperSource.start();
-    whisperLfo.start();
+    for (let i = 0; i < whisperBufferSize; i++) whisperData[i] = Math.random() * 2 - 1;
+    const whisperSource = audioCtx.createBufferSource(); whisperSource.buffer = whisperBuffer; whisperSource.loop = true;
+    const whisperFilter = audioCtx.createBiquadFilter(); whisperFilter.type = 'bandpass'; whisperFilter.frequency.value = 1000; whisperFilter.Q.value = 2;
+    const whisperLfo = audioCtx.createOscillator(); const whisperLfoGain = audioCtx.createGain();
+    whisperLfo.frequency.value = 0.3; whisperLfoGain.gain.value = 500;
+    whisperLfo.connect(whisperLfoGain); whisperLfoGain.connect(whisperFilter.frequency);
+    const whisperGain = audioCtx.createGain(); whisperGain.gain.value = 0.04;
+    whisperSource.connect(whisperFilter); whisperFilter.connect(whisperGain); whisperGain.connect(audioCtx.destination);
+    whisperSource.start(); whisperLfo.start();
 
-    // 3. 闪烁电流声
-    flickerSoundInterval = setInterval(playFlickerSound, 130);
-
-    // 4. 随机倒放声
-    reverseSoundInterval = setInterval(() => {
-      if (Math.random() > 0.6) playReverseSound();
-    }, 3000);
+    // 3. 电流与倒放
+    flickerSoundInterval = setInterval(playFlickerSound, 100);
+    reverseSoundInterval = setInterval(() => { if (Math.random() > 0.6) playReverseSound(); }, 2500);
   }
 
   function playFlickerSound() {
     if (!audioCtx || !document.body.classList.contains('flashing')) return;
-    if (Math.random() < 0.3) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(800 + Math.random() * 800, audioCtx.currentTime);
+    if (Math.random() < 0.4) return;
+    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+    osc.type = 'square'; osc.frequency.setValueAtTime(800 + Math.random() * 800, audioCtx.currentTime);
     gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.04);
   }
 
   function playReverseSound() {
     if (!audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    const filter = audioCtx.createBiquadFilter();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(1500, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.4);
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(2000, audioCtx.currentTime);
-    filter.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.4);
-    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.4);
+    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); const filter = audioCtx.createBiquadFilter();
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(1500, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.4);
+    filter.type = 'lowpass'; filter.frequency.setValueAtTime(2000, audioCtx.currentTime); filter.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.4);
+    gain.gain.setValueAtTime(0.06, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+    osc.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.4);
   }
 
   let lastStickySoundTime = 0;
   function playStickySound() {
-    if (!audioCtx) return;
-    const now = Date.now();
-    if (now - lastStickySoundTime < 55) return;
-    lastStickySoundTime = now;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    const filter = audioCtx.createBiquadFilter();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(150 + Math.random() * 100, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
-    filter.type = 'lowpass';
-    filter.frequency.value = 400;
-    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.1);
+    if (!audioCtx) return; const now = Date.now();
+    if (now - lastStickySoundTime < 50) return; lastStickySoundTime = now;
+    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); const filter = audioCtx.createBiquadFilter();
+    osc.type = 'sine'; osc.frequency.setValueAtTime(150 + Math.random() * 100, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+    filter.type = 'lowpass'; filter.frequency.value = 400;
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+    osc.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
   }
 
   function playJumpscare() {
     if (!audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.5);
-    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.5);
+    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.5);
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+    osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.5);
   }
 
-  // ================= 文字打乱（不规则效果） =================
-  (function distortText() {
-    const el = document.getElementById('spookyText');
-    const chars = el.textContent.split('');
-    el.innerHTML = '';
-    chars.forEach(ch => {
-      const span = document.createElement('span');
-      span.textContent = ch;
-      const rot = (Math.random() - 0.5) * 14;   // -7deg ~ 7deg
-      const yOff = (Math.random() - 0.5) * 14;  // -7px ~ 7px
-      const scale = 0.88 + Math.random() * 0.38; // 0.88 ~ 1.26
-      span.style.transform = `rotate(${rot}deg) translateY(${yOff}px) scale(${scale})`;
-      el.appendChild(span);
-    });
-  })();
+  // ================= 背景巨大幽灵眼 =================
+  function createBgEyes() {
+    const container = document.getElementById('bg-eyes');
+    for (let i = 0; i < 6; i++) {
+      const eye = document.createElement('div');
+      eye.className = 'bg-eye';
+      const size = 200 + Math.random() * 300;
+      eye.style.width = size + 'px';
+      eye.style.height = size * 0.5 + 'px';
+      eye.style.left = (Math.random() * 80 - 10) + 'vw';
+      eye.style.top = (Math.random() * 80 - 10) + 'vh';
+      eye.style.animationDelay = (Math.random() * -15) + 's';
+      container.appendChild(eye);
+    }
+  }
 
-  // ================= 眼睛生成与交互 =================
+  // ================= 互动小眼睛 =================
   const eyesLayer = document.getElementById('eyes');
   const eyes = [];
 
   function createEyes() {
-    // 清理旧眼睛与定时器
-    eyes.forEach(o => clearTimeout(o.blinkTimer));
-    eyes.length = 0;
-    eyesLayer.innerHTML = '';
-
-    const W = window.innerWidth;
-    const H = window.innerHeight;
-
-    // 四周安全区（上、下、左、右），避开中间文字
+    eyes.forEach(o => clearTimeout(o.blinkTimer)); eyes.length = 0; eyesLayer.innerHTML = '';
+    const W = window.innerWidth; const H = window.innerHeight;
     const regions = [
-      { xMin: 3, xMax: 97, yMin: 2,  yMax: 18 },
-      { xMin: 3, xMax: 97, yMin: 82, yMax: 98 },
-      { xMin: 3, xMax: 14, yMin: 18, yMax: 82 },
-      { xMin: 86, xMax: 97, yMin: 18, yMax: 82 }
+      { xMin: 3, xMax: 97, yMin: 2,  yMax: 18 }, { xMin: 3, xMax: 97, yMin: 82, yMax: 98 },
+      { xMin: 3, xMax: 14, yMin: 18, yMax: 82 }, { xMin: 86, xMax: 97, yMin: 18, yMax: 82 }
     ];
-
-    const placed = [];
-    const area = W * H;
-    const targetCount = Math.min(80, Math.max(30, Math.floor(area / 9000)));
+    const placed = []; const targetCount = Math.min(80, Math.max(30, Math.floor((W * H) / 8000)));
 
     for (let i = 0; i < targetCount; i++) {
       const region = regions[i % regions.length];
-
-      let x, y, w, h, cx, cy;
-      let ok = false, tries = 0;
-
+      let x, y, w, h, cx, cy, ok = false, tries = 0;
       while (!ok && tries < 60) {
         x = region.xMin + Math.random() * (region.xMax - region.xMin);
         y = region.yMin + Math.random() * (region.yMax - region.yMin);
-        w = 30 + Math.random() * 45;   // 宽度 30 ~ 75px
-        h = w * 0.46;
-        cx = (x / 100) * W;
-        cy = (y / 100) * H;
-
+        w = 30 + Math.random() * 45; h = w * 0.46;
+        cx = (x / 100) * W; cy = (y / 100) * H;
         ok = true;
-        for (const p of placed) {
-          if (Math.hypot(cx - p.cx, cy - p.cy) < (w + p.w) * 0.62) {
-            ok = false; break;
-          }
-        }
+        for (const p of placed) { if (Math.hypot(cx - p.cx, cy - p.cy) < (w + p.w) * 0.62) { ok = false; break; } }
         tries++;
       }
       if (!ok) continue;
       placed.push({ cx, cy, w });
 
-      const el = document.createElement('div');
-      el.className = 'eye';
-      el.style.width = w + 'px';
-      el.style.height = h + 'px';
-      el.style.left = x + 'vw';
-      el.style.top = y + 'vh';
+      const el = document.createElement('div'); el.className = 'eye';
+      el.style.width = w + 'px'; el.style.height = h + 'px';
+      el.style.left = x + 'vw'; el.style.top = y + 'vh';
 
-      const shape = document.createElement('div');
-      shape.className = 'eye-shape';
+      const shape = document.createElement('div'); shape.className = 'eye-shape';
+      const iris = document.createElement('div'); iris.className = 'iris';
+      shape.appendChild(iris); el.appendChild(shape); eyesLayer.appendChild(el);
 
-      const iris = document.createElement('div');
-      iris.className = 'iris';
-
-      shape.appendChild(iris);
-      el.appendChild(shape);
-      eyesLayer.appendChild(el);
-
-      const obj = {
-        el, shape, iris,
-        openY: 1,        // 当前睁眼大小
-        blinking: false,
-        blinkTimer: null
-      };
+      const obj = { el, shape, iris, openY: 1, blinking: false, blinkTimer: null };
       eyes.push(obj);
 
-      // 点击/触摸眼睛 -> 单只眨眼
-      el.addEventListener('pointerdown', function (e) {
-        e.stopPropagation();
-        triggerBlink(obj);
-      });
-
-      // 排程自动眨眼（错开，不同时）
+      el.addEventListener('pointerdown', function (e) { e.stopPropagation(); triggerBlink(obj); });
       scheduleAutoBlink(obj);
     }
   }
 
-  // 眨眼动画
   function triggerBlink(obj) {
-    if (obj.blinking) return;
-    obj.blinking = true;
-
-    // 闭眼
-    obj.shape.style.transition = 'transform 0.07s ease-in';
-    obj.shape.style.transform = 'scaleY(0.05)';
-
+    if (obj.blinking) return; obj.blinking = true;
+    obj.shape.style.transition = 'transform 0.07s ease-in'; obj.shape.style.transform = 'scaleY(0.05)';
     setTimeout(() => {
-      // 睁开回当前应有的高度
       obj.shape.style.transition = 'transform 0.14s cubic-bezier(0.2, 0.9, 0.3, 1.2)';
       obj.shape.style.transform = 'scaleY(' + obj.openY + ')';
       setTimeout(() => { obj.blinking = false; }, 150);
     }, 80);
   }
 
-  // 自动眨眼排程（1.5s ~ 7.5s 随机，互相错开）
   function scheduleAutoBlink(obj) {
     const delay = 1500 + Math.random() * 6000;
-    obj.blinkTimer = setTimeout(() => {
-      if (!obj.blinking) triggerBlink(obj);
-      scheduleAutoBlink(obj);
-    }, delay);
+    obj.blinkTimer = setTimeout(() => { if (!obj.blinking) triggerBlink(obj); scheduleAutoBlink(obj); }, delay);
   }
 
-  // 手指/鼠标跟踪：眼球移动 + 上下看改变眼睛睁大程度
   function handleMove(e) {
     initAudio();
-
     let clientX, clientY;
-    if (e.touches && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else if (e.changedTouches && e.changedTouches.length > 0) {
-      clientX = e.changedTouches[0].clientX;
-      clientY = e.changedTouches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
+    if (e.touches && e.touches.length > 0) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+    else if (e.changedTouches && e.changedTouches.length > 0) { clientX = e.changedTouches[0].clientX; clientY = e.changedTouches[0].clientY; }
+    else { clientX = e.clientX; clientY = e.clientY; }
 
     const H = window.innerHeight;
-
     eyes.forEach(obj => {
       const rect = obj.el.getBoundingClientRect();
-      const ex = rect.left + rect.width / 2;
-      const ey = rect.top + rect.height / 2;
-
-      const dx = clientX - ex;
-      const dy = clientY - ey;
-      const angle = Math.atan2(dy, dx);
-
-      // 眼球（虹膜）移动偏移
+      const ex = rect.left + rect.width / 2; const ey = rect.top + rect.height / 2;
+      const angle = Math.atan2(clientY - ey, clientX - ex);
       const maxShift = rect.width * 0.14;
-      const ox = Math.cos(angle) * maxShift;
-      const oy = Math.sin(angle) * maxShift;
-      obj.iris.style.transform = 'translate(calc(-50% + ' + ox + 'px), calc(-50% + ' + oy + 'px))';
+      obj.iris.style.transform = 'translate(calc(-50% + ' + Math.cos(angle) * maxShift + 'px), calc(-50% + ' + Math.sin(angle) * maxShift + 'px))';
 
-      // 上下看时眼睛睁大 / 缩小
-      const normY = Math.max(-1, Math.min(1, dy / (H * 0.45)));
-      let openY = 1 - normY * 0.20;    // 向上 -> 1.20，向下 -> 0.80
-      openY = Math.max(0.72, Math.min(1.30, openY));
+      const normY = Math.max(-1, Math.min(1, (clientY - ey) / (H * 0.45)));
+      let openY = 1 - normY * 0.20; openY = Math.max(0.72, Math.min(1.30, openY));
       obj.openY = openY;
-
-      if (!obj.blinking) {
-        obj.shape.style.transform = 'scaleY(' + openY + ')';
-      }
+      if (!obj.blinking) obj.shape.style.transform = 'scaleY(' + openY + ')';
     });
-
     playStickySound();
   }
 
@@ -492,22 +353,18 @@ zzzz
   document.addEventListener('touchmove', handleMove, { passive: false });
   document.addEventListener('touchstart', handleMove, { passive: false });
 
-  // 初始化
+  // 初始化所有元素
+  createBgEyes();
   createEyes();
 
-  // 1.5 秒后：眼睛出现，屏幕开始疯狂闪烁
   setTimeout(() => {
-    initAudio();
-    document.body.classList.add('flashing');
+    initAudio(); document.body.classList.add('flashing');
     document.querySelectorAll('.eye').forEach(el => el.classList.add('spawned'));
     playJumpscare();
   }, 1500);
 
   let resizeTimer;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(createEyes, 300);
-  });
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { createBgEyes(); createEyes(); }, 300); });
 </script>
 
 </body>
